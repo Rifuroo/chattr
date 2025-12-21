@@ -8,6 +8,9 @@ class User {
   final bool isPrivate;
   final String? fcmToken;
   final DateTime? createdAt;
+  final int followersCount;
+  final int followingCount;
+  final int postsCount;
 
   User({
     required this.id,
@@ -19,6 +22,9 @@ class User {
     required this.isPrivate,
     this.fcmToken,
     this.createdAt,
+    this.followersCount = 0,
+    this.followingCount = 0,
+    this.postsCount = 0,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -32,6 +38,9 @@ class User {
       isPrivate: json['is_private'] ?? false,
       fcmToken: json['fcm_token'],
       createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null,
+      followersCount: json['followers_count'] ?? 0,
+      followingCount: json['following_count'] ?? 0,
+      postsCount: json['posts_count'] ?? 0,
     );
   }
 
@@ -45,6 +54,9 @@ class User {
     'is_private': isPrivate,
     'fcm_token': fcmToken,
     'created_at': createdAt?.toIso8601String(),
+    'followers_count': followersCount,
+    'following_count': followingCount,
+    'posts_count': postsCount,
   };
 }
 

@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 
 class UserProvider with ChangeNotifier {
   List<User> _searchResults = [];
@@ -95,6 +97,27 @@ class UserProvider with ChangeNotifier {
       }
     } catch (e) {
       print("Update privacy error: $e");
+    }
+    return false;
+  }
+
+  Future<bool> updateProfile({required String name, required String bio, XFile? avatarFile}) async {
+    try {
+      Map<String, String> fields = {
+        'name': name,
+        'bio': bio,
+      };
+      
+      final responseStream = await ApiService.putMultipart('/users/profile', fields, avatarFile, fieldName: 'avatar');
+      final response = await http.Response.fromStream(responseStream);
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print("Update profile failed: ${response.statusCode} ${response.body}");
+      }
+    } catch (e) {
+      print("Update profile error: $e");
     }
     return false;
   }

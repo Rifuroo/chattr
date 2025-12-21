@@ -27,6 +27,8 @@ func SetupRoutes(r *gin.Engine) {
 		{
 			users.GET("/:id", controllers.GetUserProfile)
 			users.PUT("/profile", controllers.UpdateProfile)
+			users.GET("/:id/followers", controllers.GetFollowers)
+			users.GET("/:id/following", controllers.GetFollowing)
 			users.POST("/:id/follow", controllers.FollowUser)
 			users.DELETE("/:id/unfollow", controllers.UnfollowUser)
 			users.POST("/fcm-token", controllers.UpdateFCMToken)
@@ -40,6 +42,7 @@ func SetupRoutes(r *gin.Engine) {
 		{
 			posts.POST("", controllers.CreatePost)
 			posts.GET("", controllers.GetPosts)
+			posts.DELETE("/:id", controllers.DeletePost)
 			posts.POST("/:id/like", controllers.LikePost)
 			posts.POST("/:id/comment", controllers.CommentPost)
 		}

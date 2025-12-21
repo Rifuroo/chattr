@@ -7,18 +7,8 @@ import 'package:image_picker/image_picker.dart';
 
 class ApiService {
   static String get baseUrl {
-    if (kIsWeb) {
-      return "http://localhost:8080";
-    }
-    
-    // For non-web platforms, we can safely use Platform
-    if (Platform.isAndroid) {
-      // Use 10.0.2.2 for Android Emulator, and your PC's IP for real devices.
-      // Detected IP: 10.218.173.184
-      return "http://10.218.173.184:8080";
-    } else {
-      return "http://localhost:8080";
-    }
+    // Production URL (Hugging Face Spaces)
+    return "https://rifuro-chattr-backend.hf.space";
   }
   
   static Future<Map<String, String>> getHeaders() async {
@@ -105,6 +95,34 @@ class ApiService {
       if (value != null) {
         request.fields[key] = value.toString();
       }
+    });
+    
+    if (file != null) {
+      if (kIsWeb) {
+        request.files.add(http.MultipartFile.fromBytes(
+          fieldName,
+          await file.readAsBytes(),
+          filename: file.name,
+        ));
+      } else {
+        request.files.add(await http.MultipartFile.fromPath(fieldName, file.path));
+      }
+    }
+    
+    return await request.send();
+  }
+
+  static Future<http.StreamedResponse> putMultipart(String endpoint, Map<String, String> fields, XFile? file, {String fieldName = 'image'}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    
+    var request = http.MultipartRequest('PUT', Uri.parse("$baseUrl$endpoint"));
+    if (token != null) {
+      request.headers['Authorization'] = 'Bearer $token'; // Fixed: using Bearer prefix for consistency
+    }
+    
+    fields.forEach((key, value) {
+        request.fields[key] = value.toString();
     });
     
     if (file != null) {

@@ -44,6 +44,7 @@ func init() {
 	}
 
 	if pk, ok := configMap["private_key"].(string); ok {
+		// Replace literal \n with actual newlines (common issue with ENV vars)
 		configMap["private_key"] = strings.ReplaceAll(pk, "\\n", "\n")
 	}
 

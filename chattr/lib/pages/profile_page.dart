@@ -7,6 +7,8 @@ import '../services/api_service.dart';
 import '../providers/chat_provider.dart';
 import 'chat_room_page.dart';
 import 'settings_page.dart';
+import 'followers_page.dart';
+import 'edit_profile_page.dart'; // Import EditProfilePage
 
 class ProfilePage extends StatefulWidget {
   final int? userId;
@@ -60,6 +62,20 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 _buildProfileHeader(user, isOwnProfile),
                 _buildBio(user),
+                if (isOwnProfile) 
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => EditProfilePage(user: user))),
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text('Edit Profile'),
+                      ),
+                    ),
+                  ),
                 if (!isOwnProfile) _buildActionButtons(user),
                 const Divider(),
                 _buildPostGrid(user),
@@ -83,13 +99,19 @@ class _ProfilePageState extends State<ProfilePage> {
                 : null,
             child: (user.avatar == null || user.avatar!.isEmpty) ? Text(user.username[0].toUpperCase(), style: const TextStyle(fontSize: 32)) : null,
           ),
-          const Expanded(
+          Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _StatItem(label: 'Posts', count: '12'), // Placeholder counts
-                _StatItem(label: 'Followers', count: '10k'),
-                _StatItem(label: 'Following', count: '500'),
+                _StatItem(label: 'Posts', count: '${user.postsCount}'),
+                GestureDetector(
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FollowersPage(userId: user.id, isFollowers: true))),
+                  child: _StatItem(label: 'Followers', count: '${user.followersCount}'),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FollowersPage(userId: user.id, isFollowers: false))),
+                  child: _StatItem(label: 'Following', count: '${user.followingCount}'),
+                ),
               ],
             ),
           ),

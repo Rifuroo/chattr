@@ -84,4 +84,18 @@ class PostProvider with ChangeNotifier {
       print("Like comment error: $e");
     }
   }
+
+  Future<bool> deletePost(int postId) async {
+    try {
+      final response = await ApiService.delete('/posts/$postId');
+      if (response.statusCode == 200) {
+        _posts.removeWhere((p) => p.id == postId);
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      print("Delete post error: $e");
+    }
+    return false;
+  }
 }

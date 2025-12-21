@@ -24,9 +24,14 @@ func ConnectDatabase() {
 	host := getEnv("DB_HOST", "127.0.0.1")
 	port := getEnv("DB_PORT", "3306")
 	database := getEnv("DB_NAME", "social_media")
+	sslMode := getEnv("DB_SSL", "skip-verify") // "true", "skip-verify", or "false"
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		username, password, host, port, database)
+
+	if sslMode != "false" {
+		dsn += fmt.Sprintf("&tls=%s", sslMode)
+	}
 
 	databaseConnection, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 

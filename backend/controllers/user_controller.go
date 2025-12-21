@@ -29,6 +29,19 @@ func GetUserProfile(c *gin.Context) {
 		}
 	}
 
+	// Calculate counts
+	var followersCount int64
+	var followingCount int64
+	var postsCount int64
+
+	config.DB.Model(&models.Follow{}).Where("following_id = ?", user.ID).Count(&followersCount)
+	config.DB.Model(&models.Follow{}).Where("follower_id = ?", user.ID).Count(&followingCount)
+	config.DB.Model(&models.Post{}).Where("user_id = ?", user.ID).Count(&postsCount)
+
+	user.FollowersCount = followersCount
+	user.FollowingCount = followingCount
+	user.PostsCount = postsCount
+
 	c.JSON(http.StatusOK, user)
 }
 
@@ -40,15 +53,24 @@ func UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	var input struct {
-		Name      string `json:"name"`
-		Bio       string `json:"bio"`
-		IsPrivate *bool  `json:"is_private"`
-	}
+	// Read fields from PostForm (multipart/form-data)
+	name := c.PostForm("name")
+	bio := c.PostForm("bio")
+	isPrivateStr := c.PostForm("is_private")
 
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if name != "" {
+		user.Name = name
+	}
+	// Bio can be empty string if user clears it, but PostForm returns empty string if not present.
+	// For simplicity, we assume if client sends it, we update it.
+	// But distinguishing "not sent" vs "empty" in Form is tricky without checking presence.
+	// We'll trust the client sends current value if not changing.
+	user.Bio = bio
+
+	if isPrivateStr == "true" {
+		user.IsPrivate = true
+	} else if isPrivateStr == "false" {
+		user.IsPrivate = false
 	}
 
 	// Handle file upload for avatar
@@ -57,16 +79,6 @@ func UpdateProfile(c *gin.Context) {
 		filename := fmt.Sprintf("avatar_%d_%s", userID, file.Filename)
 		c.SaveUploadedFile(file, "uploads/"+filename)
 		user.Avatar = "/uploads/" + filename
-	}
-
-	if input.Name != "" {
-		user.Name = input.Name
-	}
-	if input.Bio != "" {
-		user.Bio = input.Bio
-	}
-	if input.IsPrivate != nil {
-		user.IsPrivate = *input.IsPrivate
 	}
 
 	config.DB.Save(&user)
@@ -143,4 +155,48 @@ func UpdateFCMToken(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "FCM token updated"})
+}
+
+func GetFollowers(c *gin.Context) {
+	userID := c.Param("id")
+	var follows []models.Follow
+	var users []models.User
+
+	// Find all follow records where this user is being followed
+	config.DB.Where("following_id = ?", userID).Find(&follows)
+
+	// Collect follower IDs
+	var followerIDs []uint
+	for _, f := range follows {
+		followerIDs = append(followerIDs, f.FollowerID)
+	}
+
+	// Fetch users by IDs
+	if len(followerIDs) > 0 {
+		config.DB.Where("id IN ?", followerIDs).Find(&users)
+	}
+
+	c.JSON(http.StatusOK, users)
+}
+
+func GetFollowing(c *gin.Context) {
+	userID := c.Param("id")
+	var follows []models.Follow
+	var users []models.User
+
+	// Find all follow records where this user is the follower
+	config.DB.Where("follower_id = ?", userID).Find(&follows)
+
+	// Collect following IDs
+	var followingIDs []uint
+	for _, f := range follows {
+		followingIDs = append(followingIDs, f.FollowingID)
+	}
+
+	// Fetch users by IDs
+	if len(followingIDs) > 0 {
+		config.DB.Where("id IN ?", followingIDs).Find(&users)
+	}
+
+	c.JSON(http.StatusOK, users)
 }

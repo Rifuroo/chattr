@@ -19,6 +19,10 @@ type User struct {
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+
+	FollowersCount int64 `json:"followers_count" gorm:"-"`
+	FollowingCount int64 `json:"following_count" gorm:"-"`
+	PostsCount     int64 `json:"posts_count" gorm:"-"`
 }
 
 type Follow struct {

@@ -52,7 +52,7 @@ func main() {
 	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "7860" // Hugging Face Spaces requires port 7860
 	}
 	r.Run(":" + port)
 }

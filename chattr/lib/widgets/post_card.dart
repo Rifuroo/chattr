@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import '../models/models.dart';
 import '../providers/post_provider.dart';
+import '../providers/auth_provider.dart'; // Import AuthProvider
 import '../services/api_service.dart';
 import '../pages/profile_page.dart';
 
@@ -53,7 +54,47 @@ class _PostCardState extends State<PostCard> {
                 ),
               ),
               const Spacer(),
-              const Icon(Icons.more_horiz),
+              Consumer<AuthProvider>(
+                builder: (context, auth, _) {
+                  final isOwner = auth.user?.id == widget.post.user.id;
+                  if (!isOwner) return const SizedBox.shrink();
+                  
+                  return PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_horiz),
+                    onSelected: (value) async {
+                      if (value == 'delete') {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Delete Post'),
+                            content: const Text('Are you sure you want to delete this post?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                              ),
+                            ],
+                          ),
+                        );
+                        
+                        if (confirm == true && mounted) {
+                          await context.read<PostProvider>().deletePost(widget.post.id);
+                        }
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Text('Delete', style: TextStyle(color: Colors.red)),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ],
           ),
         ),
