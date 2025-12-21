@@ -1,0 +1,22 @@
+# Binary files
+backend/main
+backend/main.exe
+
+# Secret files
+backend/*.json
+chattr/android/app/google-services.json
+chattr/ios/Runner/GoogleService-Info.plist
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Flutter related
+chattr/.dart_tool/
+chattr/.packages
+chattr/.flutter-plugins
+chattr/.flutter-plugins-dependencies
+chattr/build/
+
+# Local env
+.env
