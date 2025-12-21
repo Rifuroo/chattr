@@ -14,6 +14,8 @@ import 'chat_list_page.dart';
 import 'search_page.dart';
 import 'reels_page.dart';
 import 'profile_page.dart';
+import 'activity_page.dart';
+import '../widgets/flash_ticker.dart';
 import '../models/models.dart';
 
 class HomePage extends StatefulWidget {
@@ -30,7 +32,7 @@ class _HomePageState extends State<HomePage> {
     const HomeFeed(),
     const SearchPage(),
     const ReelsPage(),
-    const NotificationsPage(), // New Page
+    const ActivityPage(),
     const ProfilePage(),
   ];
 
@@ -82,36 +84,6 @@ class _HomePageState extends State<HomePage> {
 }
 
 class HomeFeed extends StatefulWidget {
-  const HomeFeed({super.key});
-
-  @override
-  State<HomeFeed> createState() => _HomeFeedState();
-}
-
-class _HomeFeedState extends State<HomeFeed> {
-  Timer? _chatTimer;
-  Timer? _notifTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PostProvider>().fetchPosts();
-      context.read<ChatProvider>().fetchChats();
-      context.read<NotificationProvider>().fetchNotifications();
-      context.read<NotificationProvider>().setupFCM();
-    });
-    // Poll for chats every 10 seconds for badges
-    _chatTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
-      if (mounted) context.read<ChatProvider>().fetchChats();
-    });
-    // Poll for notifications every 15 seconds for Flushbar (Web)
-    _notifTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
-      if (mounted) _checkNotifications();
-    });
-  }
-
-  void _checkNotifications() async {
     final notifProvider = context.read<NotificationProvider>();
     await notifProvider.fetchNotifications(silent: true);
     
@@ -216,12 +188,15 @@ class _HomeFeedState extends State<HomeFeed> {
             }
 
             return ListView.builder(
-              itemCount: postProvider.posts.length + 1,
+              itemCount: postProvider.posts.length + 2,
               itemBuilder: (context, index) {
                 if (index == 0) {
+                  return const FlashTicker();
+                }
+                if (index == 1) {
                   return const StoriesBar();
                 }
-                final post = postProvider.posts[index - 1];
+                final post = postProvider.posts[index - 2];
                 return PostCard(post: post);
               },
             );
@@ -232,45 +207,4 @@ class _HomeFeedState extends State<HomeFeed> {
   }
 }
 
-class NotificationsPage extends StatelessWidget {
-  const NotificationsPage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Activity")),
-      body: Consumer<NotificationProvider>(
-        builder: (context, notifProvider, _) {
-          if (notifProvider.isLoading && notifProvider.notifications.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (notifProvider.notifications.isEmpty) {
-            return const Center(child: Text("No notifications yet."));
-          }
-          return ListView.builder(
-            itemCount: notifProvider.notifications.length,
-            itemBuilder: (context, index) {
-              final n = notifProvider.notifications[index];
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: n.isRead ? Colors.grey[200] : Colors.blue[100],
-                  child: Icon(
-                    n.type == 'like' ? Icons.favorite : 
-                    n.type == 'comment' ? Icons.comment : 
-                    n.type == 'follow' ? Icons.person_add : 
-                    Icons.notifications,
-                    color: n.isRead ? Colors.grey : Colors.blue,
-                  ),
-                ),
-                title: Text(n.title, style: TextStyle(fontWeight: n.isRead ? FontWeight.normal : FontWeight.bold)),
-                subtitle: Text(n.body),
-                trailing: !n.isRead ? const Icon(Icons.circle, size: 10, color: Colors.blue) : null,
-                onTap: () => notifProvider.markAsRead(n.id),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}

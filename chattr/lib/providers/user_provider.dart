@@ -101,12 +101,24 @@ class UserProvider with ChangeNotifier {
     return false;
   }
 
-  Future<bool> updateProfile({required String name, required String bio, XFile? avatarFile}) async {
+  Future<bool> updateProfile({
+    required String name,
+    required String bio,
+    String? moodEmoji,
+    String? moodText,
+    bool? isGhostMode,
+    String? profileTheme,
+    XFile? avatarFile,
+  }) async {
     try {
       Map<String, String> fields = {
         'name': name,
         'bio': bio,
       };
+      if (moodEmoji != null) fields['mood_emoji'] = moodEmoji;
+      if (moodText != null) fields['mood_text'] = moodText;
+      if (isGhostMode != null) fields['is_ghost_mode'] = isGhostMode.toString();
+      if (profileTheme != null) fields['profile_theme'] = profileTheme;
       
       final responseStream = await ApiService.putMultipart('/users/profile', fields, avatarFile, fieldName: 'avatar');
       final response = await http.Response.fromStream(responseStream);

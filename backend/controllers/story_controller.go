@@ -24,16 +24,20 @@ func CreateStory(c *gin.Context) {
 	filename := fmt.Sprintf("story_%d_%s", userID, file.Filename)
 	c.SaveUploadedFile(file, "uploads/"+filename)
 
+	isAudio := c.PostForm("is_audio") == "true"
 	story := models.Story{
 		UserID:    userID,
 		MediaPath: "/uploads/" + filename,
 		ExpiresAt: time.Now().Add(24 * time.Hour), // Expire in 24 hours
+		IsAudio:   isAudio,
 	}
 
 	if err := config.DB.Create(&story).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create story"})
 		return
 	}
+
+	services.UpdateQuestProgress(userID, "story")
 
 	c.JSON(http.StatusCreated, story)
 }
@@ -87,7 +91,10 @@ func ViewStory(c *gin.Context) {
 				body := viewer.Username + " viewed your story!"
 				services.CreateNotification(story.UserID, "story_view", title, body)
 				if story.User.FCMToken != "" {
-					services.SendFCMNotification(story.User.FCMToken, title, body)
+					services.SendFCMNotification(story.User.FCMToken, title, body, map[string]string{
+						"type":     "story_view",
+						"story_id": strconv.Itoa(int(story.ID)),
+					})
 				}
 			}
 		}

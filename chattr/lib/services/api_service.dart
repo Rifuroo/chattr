@@ -81,7 +81,7 @@ class ApiService {
     }
   }
 
-  static Future<http.StreamedResponse> postMultipart(String endpoint, Map<String, String> fields, XFile? file, {String fieldName = 'image'}) async {
+  static Future<http.StreamedResponse> postMultipart(String endpoint, Map<String, String> fields, List<XFile>? files, {String fieldName = 'media'}) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     
@@ -90,26 +90,39 @@ class ApiService {
       request.headers['Authorization'] = 'Bearer $token';
     }
     
-    // Ensure no null values in fields to prevent "Cannot send Null" error
     fields.forEach((key, value) {
-      if (value != null) {
         request.fields[key] = value.toString();
-      }
     });
     
-    if (file != null) {
-      if (kIsWeb) {
-        request.files.add(http.MultipartFile.fromBytes(
-          fieldName,
-          await file.readAsBytes(),
-          filename: file.name,
-        ));
-      } else {
-        request.files.add(await http.MultipartFile.fromPath(fieldName, file.path));
+    if (files != null) {
+      for (var file in files) {
+        if (kIsWeb) {
+          request.files.add(http.MultipartFile.fromBytes(
+            fieldName,
+            await file.readAsBytes(),
+            filename: file.name,
+          ));
+        } else {
+          request.files.add(await http.MultipartFile.fromPath(fieldName, file.path));
+        }
       }
     }
     
     return await request.send();
+  }
+
+  static Future<http.Response> repost(int postId, String content) async {
+    try {
+      final headers = await getHeaders();
+      return await http.post(
+        Uri.parse("$baseUrl/posts/$postId/repost"),
+        headers: headers,
+        body: jsonEncode({'content': content}),
+      );
+    } catch (e) {
+      print("ApiService.repost error: $e");
+      rethrow;
+    }
   }
 
   static Future<http.StreamedResponse> putMultipart(String endpoint, Map<String, String> fields, XFile? file, {String fieldName = 'image'}) async {
@@ -138,5 +151,87 @@ class ApiService {
     }
     
     return await request.send();
+  }
+
+  static Future<List<dynamic>> searchUsers(String query) async {
+    final response = await get('/users/search?q=$query');
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    return [];
+  }
+
+  static Future<List<dynamic>> getExploreFeed() async {
+    final response = await get('/posts/explore');
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    return [];
+  }
+
+  static Future<bool> toggleSave(int postId) async {
+    final response = await post('/posts/$postId/save', {});
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['saved'] ?? false;
+    }
+    return false;
+  }
+
+  static Future<List<dynamic>> getSavedPosts() async {
+    final response = await get('/users/saved');
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    return [];
+  }
+
+  static Future<http.Response> votePoll(int postId, int optionIndex) async {
+    return await post('/posts/$postId/vote', {'option_index': optionIndex});
+  }
+
+  // --- Phase 6: Privacy & Blocking ---
+  static Future<bool> toggleBlock(int userId) async {
+    final response = await post('/users/$userId/block', {});
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['blocked'] ?? false;
+    }
+    return false;
+  }
+
+  static Future<List<dynamic>> getFollowRequests() async {
+    final response = await get('/users/requests');
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    return [];
+  }
+
+  static Future<http.Response> respondToFollowRequest(int requestId, String action) async {
+    return await post('/users/requests/$requestId/respond', {'action': action});
+  }
+
+  // --- Phase 6: Anonymous Tells ---
+  static Future<http.Response> sendTell(int userId, String content) async {
+    return await post('/users/$userId/tell', {'content': content});
+  }
+
+  static Future<List<dynamic>> getMyTells() async {
+    final response = await get('/tells');
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    return [];
+  }
+
+  static Future<http.Response> markTellAsRead(int tellId) async {
+    return await put('/tells/$tellId/read', {});
+  }
+
+  // --- Phase 6: Post Insights ---
+  static Future<void> viewPost(int postId) async {
+    // Fire and forget view update
+    post('/posts/$postId/view', {});
   }
 }

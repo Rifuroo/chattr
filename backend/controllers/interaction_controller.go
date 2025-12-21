@@ -41,7 +41,10 @@ func LikePost(c *gin.Context) {
 			body := user.Username + " liked your post!"
 			services.CreateNotification(post.UserID, "like", title, body)
 			if post.User.FCMToken != "" {
-				services.SendFCMNotification(post.User.FCMToken, title, body)
+				services.SendFCMNotification(post.User.FCMToken, title, body, map[string]string{
+					"type":    "like",
+					"post_id": strconv.Itoa(int(post.ID)),
+				})
 			}
 		}
 
@@ -90,7 +93,11 @@ func CommentPost(c *gin.Context) {
 			body := sender.Username + " replied to your comment!"
 			services.CreateNotification(parentComment.UserID, "reply", title, body)
 			if parentComment.User.FCMToken != "" {
-				services.SendFCMNotification(parentComment.User.FCMToken, title, body)
+				services.SendFCMNotification(parentComment.User.FCMToken, title, body, map[string]string{
+					"type":       "reply",
+					"post_id":    strconv.Itoa(int(postID)),
+					"comment_id": strconv.Itoa(int(comment.ID)),
+				})
 			}
 		}
 	} else {
@@ -102,7 +109,10 @@ func CommentPost(c *gin.Context) {
 			body := sender.Username + " commented on your post!"
 			services.CreateNotification(post.UserID, "comment", title, body)
 			if post.User.FCMToken != "" {
-				services.SendFCMNotification(post.User.FCMToken, title, body)
+				services.SendFCMNotification(post.User.FCMToken, title, body, map[string]string{
+					"type":    "comment",
+					"post_id": strconv.Itoa(int(post.ID)),
+				})
 			}
 		}
 	}
@@ -142,7 +152,11 @@ func LikeComment(c *gin.Context) {
 			body := sender.Username + " liked your comment!"
 			services.CreateNotification(comment.UserID, "like", title, body)
 			if comment.User.FCMToken != "" {
-				services.SendFCMNotification(comment.User.FCMToken, title, body)
+				services.SendFCMNotification(comment.User.FCMToken, title, body, map[string]string{
+					"type":       "comment_like",
+					"post_id":    strconv.Itoa(int(comment.PostID)),
+					"comment_id": strconv.Itoa(int(comment.ID)),
+				})
 			}
 		}
 

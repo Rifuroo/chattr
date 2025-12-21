@@ -66,15 +66,43 @@ class ChatProvider with ChangeNotifier {
     return null;
   }
 
-  Future<bool> sendMessage(int chatId, String message) async {
+  Future<bool> sendMessage(int chatId, String message, {String type = 'text', String? gifUrl, bool isSecret = false, int? expiresIn}) async {
     try {
-      final response = await ApiService.post('/chats/$chatId/messages', {'message': message});
+      final Map<String, dynamic> body = {
+        'message': message,
+        'type': type,
+        'is_secret': isSecret,
+      };
+      if (gifUrl != null) body['gif_url'] = gifUrl;
+      if (expiresIn != null) body['expires_in'] = expiresIn;
+      
+      final response = await ApiService.post('/chats/$chatId/messages', body);
       if (response.statusCode == 201) {
         fetchMessages(chatId);
         return true;
       }
     } catch (e) {
       print("Send message error: $e");
+    }
+    return false;
+  }
+
+  Future<bool> sendMediaMessage(int chatId, XFile file, String type, {bool isSecret = false, int? expiresIn}) async {
+    try {
+      final Map<String, String> fields = {'type': type, 'is_secret': isSecret.toString()};
+      if (expiresIn != null) fields['expires_in'] = expiresIn.toString();
+      
+      final response = await ApiService.postMultipart(
+        '/chats/$chatId/messages',
+        fields,
+        [file],
+      );
+      if (response.statusCode == 201) {
+        fetchMessages(chatId);
+        return true;
+      }
+    } catch (e) {
+      print("Send media message error: $e");
     }
     return false;
   }

@@ -6,6 +6,7 @@ import '../models/models.dart';
 import '../providers/auth_provider.dart';
 import '../providers/story_provider.dart';
 import '../services/api_service.dart';
+import 'audio_story_recorder.dart';
 
 class StoriesBar extends StatefulWidget {
   const StoriesBar({super.key});
@@ -54,7 +55,12 @@ class _StoriesBarState extends State<StoriesBar> {
             itemCount: otherStories.length + 1,
             itemBuilder: (context, index) {
               if (index == 0) {
-                return _buildAddStoryButton(myStory.isNotEmpty ? myStory.first : null);
+                return Row(
+                  children: [
+                    _buildAddStoryButton(myStory.isNotEmpty ? myStory.first : null),
+                    _buildMomentButton(),
+                  ],
+                );
               }
               final story = otherStories[index - 1];
               return _buildStoryItem(story);
@@ -142,6 +148,43 @@ class _StoriesBarState extends State<StoriesBar> {
     );
   }
 
+  Widget _buildMomentButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => AudioStoryRecorder(
+                  onStoryCreated: () {
+                    Navigator.pop(context);
+                    context.read<StoryProvider>().fetchStories();
+                  },
+                ),
+              );
+            },
+            child: Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.blue.withOpacity(0.2)),
+              ),
+              child: const Icon(Icons.mic, color: Colors.blue, size: 28),
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text('Moment', style: TextStyle(fontSize: 12, color: Colors.blue)),
+        ],
+      ),
+    );
+  }
+
   Future<void> _pickAndUploadStory() async {
     final picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
@@ -217,13 +260,29 @@ class _StoriesBarState extends State<StoriesBar> {
         body: Stack(
           children: [
             Center(
-              child: story.mediaPath.isNotEmpty
-                ? CachedNetworkImage(
-                    imageUrl: "${ApiService.baseUrl}${story.mediaPath.startsWith('/') ? '' : '/'}${story.mediaPath}",
-                    placeholder: (context, url) => const CircularProgressIndicator(),
-                    fit: BoxFit.contain,
+              child: story.isAudio 
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.volume_up, color: Colors.white, size: 80),
+                      const SizedBox(height: 20),
+                      const Text(
+                        "Chattr Moment",
+                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        "Voice from ${story.user.username}",
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                    ],
                   )
-                : const Icon(Icons.broken_image, color: Colors.white, size: 64),
+                : story.mediaPath.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: "${ApiService.baseUrl}${story.mediaPath.startsWith('/') ? '' : '/'}${story.mediaPath}",
+                      placeholder: (context, url) => const CircularProgressIndicator(),
+                      fit: BoxFit.contain,
+                    )
+                  : const Icon(Icons.broken_image, color: Colors.white, size: 64),
             ),
             Positioned(
               top: 50,

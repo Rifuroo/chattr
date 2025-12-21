@@ -43,6 +43,14 @@ dependencies:
   another_flushbar: ^1.12.32
   firebase_core: ^4.3.0
   firebase_messaging: ^16.1.0
+  video_player: ^2.10.1
+  smooth_page_indicator: ^2.0.1
+  chewie: ^1.13.0
+  share_plus: ^10.1.4
+  qr_flutter: ^4.1.0
+  giphy_get: ^3.6.1+1
+  record: ^6.1.1
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:

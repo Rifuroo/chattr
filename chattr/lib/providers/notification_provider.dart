@@ -4,6 +4,10 @@ import '../models/models.dart';
 import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import '../main.dart';
+import '../pages/chat_room_page.dart';
+import '../pages/profile_page.dart';
+import '../pages/activity_page.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("Handling a background message: ${message.messageId}");
@@ -41,6 +45,60 @@ class NotificationProvider extends ChangeNotifier {
     messaging.onTokenRefresh.listen((newToken) {
       _updateTokenOnBackend(newToken);
     });
+  }
+
+  void initializeDeepLinking(BuildContext context) {
+    if (kIsWeb) return;
+
+    // Handle background-to-foreground clicks
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      _handleNotificationClick(context, message);
+    });
+
+    // Handle cold start (app closed) clicks
+    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+      if (message != null) {
+        _handleNotificationClick(context, message);
+      }
+    });
+  }
+
+  void _handleNotificationClick(BuildContext context, RemoteMessage message) {
+    final data = message.data;
+    final type = data['type'];
+
+    if (type == 'message') {
+      final chatId = data['chat_id'];
+      if (chatId != null) {
+        final id = int.tryParse(chatId);
+        if (id != null) {
+          // Fetch chat details and navigate
+          ApiService.get('/chats').then((response) {
+            if (response.statusCode == 200) {
+              final List<dynamic> chatsData = jsonDecode(response.body);
+              final chats = chatsData.map((c) => Chat.fromJson(c)).toList();
+              final chat = chats.firstWhere((c) => c.id == id);
+              navigatorKey.currentState?.push(
+                MaterialPageRoute(builder: (_) => ChatRoomPage(chat: chat))
+              );
+            }
+          });
+        }
+      }
+    } else if (type == 'follow') {
+      final userId = data['user_id'];
+      if (userId != null) {
+        final id = int.tryParse(userId);
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(builder: (_) => ProfilePage(userId: id))
+        );
+      }
+    } else if (type == 'mention' || type == 'comment' || type == 'like' || type == 'reply') {
+      // For these types, navigate to Activity/Notifications page for now
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(builder: (_) => const ActivityPage())
+      );
+    }
   }
 
   Future<void> _updateTokenOnBackend(String token) async {

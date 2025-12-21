@@ -1,12 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:intl/intl.dart';
-import '../models/models.dart';
-import '../providers/post_provider.dart';
-import '../providers/auth_provider.dart'; // Import AuthProvider
 import '../services/api_service.dart';
+import 'package:giphy_get/giphy_get.dart';
 import '../pages/profile_page.dart';
+import '../widgets/video_player_widget.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class PostCard extends StatefulWidget {
   final Post post;
@@ -18,11 +14,21 @@ class PostCard extends StatefulWidget {
 
 class _PostCardState extends State<PostCard> {
   final TextEditingController _commentController = TextEditingController();
+  final PageController _pageController = PageController();
+  String? _selectedCommentGif;
 
   @override
   void dispose() {
     _commentController.dispose();
+    _pageController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Increment view count on first build
+    Future.microtask(() => context.read<PostProvider>().viewPost(widget.post.id));
   }
 
   @override
@@ -48,9 +54,32 @@ class _PostCardState extends State<PostCard> {
               const SizedBox(width: 10),
               GestureDetector(
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfilePage(userId: widget.post.user.id))),
-                child: Text(
-                  widget.post.user.username,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                child: Row(
+                  children: [
+                    Text(
+                      widget.post.user.username,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                      Text(widget.post.user.moodEmoji!, style: const TextStyle(fontSize: 12)),
+                    ],
+                    if (widget.post.isFlash) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.amber,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.bolt, size: 10, color: Colors.white),
+                            SizedBox(width: 2),
+                            Text("FLASH", style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               const Spacer(),
@@ -98,18 +127,52 @@ class _PostCardState extends State<PostCard> {
             ],
           ),
         ),
-        // Image
-        if (widget.post.imagePath.isNotEmpty)
-          GestureDetector(
-            onDoubleTap: () => context.read<PostProvider>().likePost(widget.post.id),
-            child: CachedNetworkImage(
-              imageUrl: "${ApiService.baseUrl}${widget.post.imagePath.startsWith('/') ? '' : '/'}${widget.post.imagePath}",
-              placeholder: (context, url) => Container(height: 300, color: Colors.grey[200]),
-              errorWidget: (context, url, error) => const Icon(Icons.error),
-              fit: BoxFit.cover,
-              width: double.infinity,
+        // Repost Branding
+        if (widget.post.originalPost != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+            child: Row(
+              children: [
+                const Icon(Icons.repeat, size: 14, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(
+                  "${widget.post.user.username} reposted",
+                  style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+              ],
             ),
           ),
+        
+        // Media (Carousel or Single)
+        _buildMedia(widget.post.originalPost ?? widget.post),
+
+        // Spotify Track Tag
+        if (widget.post.spotifyTrackID != null && widget.post.spotifyTrackID!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.music_note, size: 14, color: Colors.green),
+                  const SizedBox(width: 4),
+                  const Text(
+                    "Music Tagged", // In real app, we'd fetch track info from Spotify API
+                    style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        
+        // Poll
+        if (widget.post.poll != null) _buildPoll(widget.post.poll!),
+
         // Actions
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
@@ -132,30 +195,61 @@ class _PostCardState extends State<PostCard> {
                 constraints: const BoxConstraints(),
               ),
               const SizedBox(width: 16),
-              const Icon(Icons.send_outlined),
+              IconButton(
+                icon: const Icon(Icons.send_outlined),
+                onPressed: () => _showShareSheet(context),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
               const Spacer(),
-              const Icon(Icons.bookmark_border),
+              Consumer<PostProvider>(
+                builder: (context, provider, _) {
+                  final isSaved = provider.savedPosts.any((p) => p.id == widget.post.id);
+                  return IconButton(
+                    icon: Icon(
+                      isSaved ? Icons.bookmark : Icons.bookmark_border,
+                      color: isSaved ? Colors.black : Colors.black87,
+                    ),
+                    onPressed: () => provider.toggleSave(widget.post.id),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  );
+                },
+              ),
             ],
           ),
         ),
+        
         // Likes & Caption
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                "${widget.post.likes.length} likes",
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              Row(
+                children: [
+                  Text(
+                    "${widget.post.likes.length} likes",
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    "${widget.post.viewCount} views",
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  ),
+                ],
               ),
               const SizedBox(height: 4),
               RichText(
                 text: TextSpan(
                   style: const TextStyle(color: Colors.black, fontSize: 13),
                   children: [
-                    TextSpan(text: widget.post.user.username, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    TextSpan(
+                      text: widget.post.user.username, 
+                      style: const TextStyle(fontWeight: FontWeight.bold)
+                    ),
                     const TextSpan(text: " "),
-                    TextSpan(text: widget.post.content),
+                    ..._buildParsedContent(widget.post.content),
                   ],
                 ),
               ),
@@ -180,6 +274,220 @@ class _PostCardState extends State<PostCard> {
       ],
     );
   }
+        List<InlineSpan> _buildParsedContent(String content) {
+    final List<InlineSpan> spans = [];
+    final words = content.split(' ');
+    
+    for (int i = 0; i < words.length; i++) {
+      final word = words[i];
+      if (word.startsWith('#')) {
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: GestureDetector(
+              onTap: () {
+                // Should navigate to hashtag search results
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Searching for $word...'))
+                );
+              },
+              child: Text(
+                word,
+                style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+            ),
+          ),
+        );
+      } else {
+        spans.add(TextSpan(text: word));
+      }
+      
+      if (i < words.length - 1) {
+        spans.add(const TextSpan(text: " "));
+      }
+    }
+    return spans;
+  }
+
+  Widget _buildMedia(Post post) {
+    if (post.media.isEmpty) {
+      // Legacy support
+      if (post.imagePath.isEmpty) return const SizedBox.shrink();
+      return _buildSingleMedia(post.imagePath, 'image');
+    }
+
+    if (post.media.length == 1) {
+      return _buildSingleMedia(post.media[0].path, post.media[0].type);
+    }
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 400,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: post.media.length,
+            itemBuilder: (context, index) {
+              return _buildSingleMedia(post.media[index].path, post.media[index].type);
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+        Center(
+          child: SmoothPageIndicator(
+            controller: _pageController,
+            count: post.media.length,
+            effect: const ScrollingDotsEffect(
+              dotWidth: 6,
+              dotHeight: 6,
+              activeDotColor: Colors.blue,
+              dotColor: Colors.grey,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSingleMedia(String path, String type) {
+    final fullUrl = "${ApiService.baseUrl}${path.startsWith('/') ? '' : '/'}$path";
+    
+    if (type == 'video') {
+      return VideoPlayerWidget(url: fullUrl);
+    }
+
+    return GestureDetector(
+      onDoubleTap: () => context.read<PostProvider>().likePost(widget.post.id),
+      child: CachedNetworkImage(
+        imageUrl: fullUrl,
+        placeholder: (context, url) => Container(height: 300, color: Colors.grey[200], child: const Center(child: CircularProgressIndicator())),
+        errorWidget: (context, url, error) => const Icon(Icons.error),
+        fit: BoxFit.cover,
+        width: double.infinity,
+      ),
+    );
+  }
+
+  void _showShareSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const Text(
+                'Share',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildShareOption(
+                    context,
+                    icon: Icons.repeat,
+                    label: 'Repost',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showRepostDialog(context);
+                    },
+                  ),
+                  _buildShareOption(
+                    context,
+                    icon: Icons.link,
+                    label: 'Copy Link',
+                    onTap: () {
+                      final url = "https://chattr.app/posts/${widget.post.id}";
+                      Clipboard.setData(ClipboardData(text: url));
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Link copied to clipboard!')),
+                      );
+                    },
+                  ),
+                  _buildShareOption(
+                    context,
+                    icon: Icons.share,
+                    label: 'Share to...',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Share.share(
+                        'Check out this post on Chattr: https://chattr.app/posts/${widget.post.id}',
+                        subject: 'Chattr Post',
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildShareOption(BuildContext context, {required IconData icon, required String label, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: const TextStyle(fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  void _showRepostDialog(BuildContext context) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Repost with caption?'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'Add a thought...'),
+          maxLines: 2,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () async {
+              final success = await context.read<PostProvider>().repost(widget.post.id, controller.text);
+              if (success && mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reposted successfully!')));
+              }
+            },
+            child: const Text('Repost', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   int? _replyingToId;
   String? _replyingToUsername;
@@ -205,83 +513,101 @@ class _PostCardState extends State<PostCard> {
               const Text("Comments", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const Divider(),
               Expanded(
-                child: Consumer<PostProvider>(
-                  builder: (context, postProvider, _) {
-                    final updatedPost = postProvider.posts.firstWhere(
-                      (p) => p.id == widget.post.id,
-                      orElse: () => widget.post,
-                    );
-                    
-                    return ListView.builder(
-                      controller: scrollController,
-                      itemCount: updatedPost.comments.length,
-                      itemBuilder: (context, index) {
-                        if (index >= updatedPost.comments.length) return const SizedBox.shrink();
-                        final comment = updatedPost.comments[index];
-                        return _buildCommentItem(comment, postProvider, setModalState);
-                      },
-                    );
-                  },
-                ),
-              ),
-              if (_replyingToId != null)
-                Container(
-                  color: Colors.grey[100],
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    children: [
-                      Text("Replying to @$_replyingToUsername", style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () => setModalState(() {
-                          _replyingToId = null;
-                          _replyingToUsername = null;
-                        }),
-                        child: const Icon(Icons.close, size: 16),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              Padding(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 10,
-                  left: 10,
-                  right: 10,
-                  top: 10,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _commentController,
-                        autofocus: _replyingToId != null,
-                        decoration: InputDecoration(
-                          hintText: _replyingToId != null ? 'Reply to $_replyingToUsername...' : 'Add a comment...',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(25), borderSide: BorderSide.none),
-                          fillColor: Colors.grey[100],
-                          filled: true,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        ),
+                  if (_selectedCommentGif != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(_selectedCommentGif!, height: 100),
+                          ),
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: IconButton(
+                              icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                              onPressed: () => setModalState(() => _selectedCommentGif = null),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.send, color: Colors.blue),
-                      onPressed: () async {
-                        if (_commentController.text.isNotEmpty) {
-                          final content = _commentController.text;
-                          final pid = _replyingToId;
-                          _commentController.clear();
-                          setModalState(() {
-                            _replyingToId = null;
-                            _replyingToUsername = null;
-                          });
-                          await context.read<PostProvider>().commentPost(widget.post.id, content, parentId: pid);
-                        }
-                      },
+                  if (_replyingToId != null)
+                    Container(
+                      color: Colors.grey[100],
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        children: [
+                          Text("Replying to @$_replyingToUsername", style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: () => setModalState(() {
+                              _replyingToId = null;
+                              _replyingToUsername = null;
+                            }),
+                            child: const Icon(Icons.close, size: 16),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-              ),
+                  Padding(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom + 10,
+                      left: 10,
+                      right: 10,
+                      top: 10,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _commentController,
+                            autofocus: _replyingToId != null,
+                            decoration: InputDecoration(
+                              hintText: _replyingToId != null ? 'Reply to $_replyingToUsername...' : 'Add a comment...',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(25), borderSide: BorderSide.none),
+                              fillColor: Colors.grey[100],
+                              filled: true,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              suffixIcon: IconButton(
+                                icon: const Icon(Icons.gif_box_outlined, color: Colors.blue),
+                                onPressed: () async {
+                                  GiphyGif? gif = await GiphyGet.getGif(
+                                    context: context,
+                                    apiKey: "7R0B1n8lqGvVIBwA6jO6pG7S4oGvQk0e",
+                                    lang: GiphyLanguage.english,
+                                  );
+                                  if (gif != null && gif.images?.fixedHeight?.url != null) {
+                                    setModalState(() => _selectedCommentGif = gif.images!.fixedHeight!.url);
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.send, color: Colors.blue),
+                          onPressed: () async {
+                            if (_commentController.text.isNotEmpty || _selectedCommentGif != null) {
+                              final content = _commentController.text;
+                              final pid = _replyingToId;
+                              final gifUrl = _selectedCommentGif;
+                              _commentController.clear();
+                              setModalState(() {
+                                _replyingToId = null;
+                                _replyingToUsername = null;
+                                _selectedCommentGif = null;
+                              });
+                              await context.read<PostProvider>().commentPost(widget.post.id, content, parentId: pid, gifUrl: gifUrl);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
             ],
           ),
         ),
@@ -331,6 +657,18 @@ class _PostCardState extends State<PostCard> {
                         ],
                       ),
                     ),
+                    if (comment.gifUrl != null && comment.gifUrl!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: CachedNetworkImage(
+                            imageUrl: comment.gifUrl!,
+                            height: 120,
+                            placeholder: (context, url) => const SizedBox(height: 120, child: Center(child: CircularProgressIndicator())),
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 4),
                     Row(
                       children: [
@@ -367,6 +705,167 @@ class _PostCardState extends State<PostCard> {
         if (comment.replies.isNotEmpty)
           ...comment.replies.map((reply) => _buildCommentItem(reply, provider, setModalState, isReply: true)).toList(),
       ],
+    );
+  Widget _buildPoll(Poll poll) {
+    final authProvider = context.read<AuthProvider>();
+    final currentUserId = authProvider.user?.id;
+    final hasVoted = poll.votes.any((v) => v.userId == currentUserId);
+    final totalVotes = poll.totalVotes;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey[200]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 10,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  poll.question,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                if (poll.isCollaborative) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text("Collaborative", style: TextStyle(color: Colors.blue, fontSize: 8, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 16),
+            ...List.generate(poll.options.length, (index) {
+              final option = poll.options[index];
+              final optionVotes = poll.votes.where((v) => v.optionIndex == index).length;
+              final percentage = totalVotes == 0 ? 0.0 : (optionVotes / totalVotes);
+              final isSelected = poll.votes.any((v) => v.userId == currentUserId && v.optionIndex == index);
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: GestureDetector(
+                  onTap: hasVoted ? null : () => context.read<PostProvider>().votePoll(widget.post.id, index),
+                  child: Stack(
+                    children: [
+                      // Background Bar
+                      Container(
+                        height: 45,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      // Progress Bar
+                      if (hasVoted)
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 500),
+                          height: 45,
+                          width: (MediaQuery.of(context).size.width - 64) * percentage,
+                          decoration: BoxDecoration(
+                            color: isSelected ? Colors.blue.withOpacity(0.2) : Colors.grey[300],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      // Content
+                      Container(
+                        height: 45,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                option,
+                                style: TextStyle(
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  color: isSelected ? Colors.blue : Colors.black87,
+                                ),
+                              ),
+                            ),
+                            if (hasVoted)
+                              Text(
+                                '${(percentage * 100).toInt()}%',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected ? Colors.blue : Colors.grey[600],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+            const SizedBox(height: 8),
+            Text(
+              '$totalVotes votes • ${hasVoted ? "Final Results" : "Vote to see results"}',
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            ),
+            if (poll.isCollaborative && !hasVoted) ...[
+              const SizedBox(height: 12),
+              TextButton.icon(
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text("Add Option"),
+                onPressed: () => _showAddOptionDialog(context, widget.post.id),
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 40),
+                  backgroundColor: Colors.blue[50],
+                  foregroundColor: Colors.blue,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAddOptionDialog(BuildContext context, int postId) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Add Poll Option"),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: "Enter your option"),
+          maxLength: 50,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () async {
+              if (controller.text.isNotEmpty) {
+                final success = await context.read<PostProvider>().addPollOption(postId, controller.text);
+                if (success && mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Option added!")));
+                }
+              }
+            },
+            child: const Text("Add"),
+          ),
+        ],
+      ),
     );
   }
 }

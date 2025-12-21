@@ -6,25 +6,33 @@ import (
 	"social-media-backend/config"
 	"social-media-backend/models"
 	"social-media-backend/services"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 func GetUserProfile(c *gin.Context) {
 	id := c.Param("id")
+	userID := c.MustGet("userID").(uint)
 	var user models.User
 	if err := config.DB.First(&user, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 
+	// Block check
+	var block models.Block
+	if config.DB.Where("(user_id = ? AND blocked_id = ?) OR (user_id = ? AND blocked_id = ?)",
+		userID, user.ID, user.ID, userID).First(&block).Error == nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "User is blocked", "blocked": true})
+		return
+	}
+
 	// Privacy logic
-	userID := c.MustGet("userID").(uint)
 	if user.IsPrivate && userID != user.ID {
-		var follows []models.Follow
-		config.DB.Where("follower_id = ? AND following_id = ?", userID, user.ID).Limit(1).Find(&follows)
-		if len(follows) == 0 {
-			c.JSON(http.StatusForbidden, gin.H{"error": "This account is private", "user": user})
+		var follow models.Follow
+		if config.DB.Where("follower_id = ? AND following_id = ?", userID, user.ID).First(&follow).Error != nil {
+			c.JSON(http.StatusForbidden, gin.H{"error": "This account is private", "user": user, "is_private": true})
 			return
 		}
 	}
@@ -61,16 +69,38 @@ func UpdateProfile(c *gin.Context) {
 	if name != "" {
 		user.Name = name
 	}
-	// Bio can be empty string if user clears it, but PostForm returns empty string if not present.
-	// For simplicity, we assume if client sends it, we update it.
-	// But distinguishing "not sent" vs "empty" in Form is tricky without checking presence.
-	// We'll trust the client sends current value if not changing.
 	user.Bio = bio
 
 	if isPrivateStr == "true" {
 		user.IsPrivate = true
 	} else if isPrivateStr == "false" {
 		user.IsPrivate = false
+	}
+
+	isGhostStr := c.PostForm("is_ghost_mode")
+	if isGhostStr == "true" {
+		user.IsGhostMode = true
+	} else if isGhostStr == "false" {
+		user.IsGhostMode = false
+	}
+
+	spotifyTrackID := c.PostForm("spotify_track_id")
+	if spotifyTrackID != "" {
+		user.SpotifyTrackID = spotifyTrackID
+	}
+
+	moodEmoji := c.PostForm("mood_emoji")
+	moodText := c.PostForm("mood_text")
+	if moodEmoji != "" {
+		user.MoodEmoji = moodEmoji
+	}
+	if moodText != "" {
+		user.MoodText = moodText
+	}
+
+	profileTheme := c.PostForm("profile_theme")
+	if profileTheme != "" {
+		user.ProfileTheme = profileTheme
 	}
 
 	// Handle file upload for avatar
@@ -83,6 +113,36 @@ func UpdateProfile(c *gin.Context) {
 
 	config.DB.Save(&user)
 	c.JSON(http.StatusOK, user)
+}
+
+func GetMemoryLane(c *gin.Context) {
+	userID := c.MustGet("userID").(uint)
+	now := time.Now()
+
+	var posts []models.Post
+	// Fetch posts from the same day/month in previous years
+	if err := config.DB.Where("user_id = ? AND MONTH(created_at) = ? AND DAY(created_at) = ? AND YEAR(created_at) < ?",
+		userID, now.Month(), now.Day(), now.Year()).
+		Preload("User").Preload("Media").Find(&posts).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch memory lane"})
+		return
+	}
+
+	c.JSON(http.StatusOK, posts)
+}
+
+func ToggleGhostMode(c *gin.Context) {
+	userID := c.MustGet("userID").(uint)
+	var user models.User
+	if err := config.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	user.IsGhostMode = !user.IsGhostMode
+	config.DB.Save(&user)
+
+	c.JSON(http.StatusOK, gin.H{"is_ghost_mode": user.IsGhostMode})
 }
 
 func SearchUsers(c *gin.Context) {
@@ -101,9 +161,34 @@ func FollowUser(c *gin.Context) {
 		return
 	}
 
+	var sender models.User
+	config.DB.First(&sender, followerID)
+
 	var following models.User
 	if err := config.DB.First(&following, followingID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User to follow not found"})
+		return
+	}
+
+	// Logic for private accounts
+	if following.IsPrivate {
+		// Check if request already exists
+		var existingRequest models.FollowRequest
+		if config.DB.Where("follower_id = ? AND user_id = ? AND status = 'pending'", followerID, following.ID).First(&existingRequest).Error == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Follow request already pending"})
+			return
+		}
+
+		request := models.FollowRequest{
+			FollowerID: followerID,
+			UserID:     following.ID,
+		}
+		config.DB.Create(&request)
+
+		// Notification for request
+		services.CreateNotification(following.ID, "follow_request", "New Follow Request", sender.Username+" wants to follow you.")
+
+		c.JSON(http.StatusOK, gin.H{"message": "Follow request sent", "status": "pending"})
 		return
 	}
 
@@ -118,16 +203,27 @@ func FollowUser(c *gin.Context) {
 	}
 
 	// Notification
-	var sender models.User
-	config.DB.First(&sender, followerID)
 	title := "New Follower"
 	body := sender.Username + " started following you!"
 	services.CreateNotification(following.ID, "follow", title, body)
 	if following.FCMToken != "" {
-		services.SendFCMNotification(following.FCMToken, title, body)
+		services.SendFCMNotification(following.FCMToken, title, body, map[string]string{
+			"type":    "follow",
+			"user_id": fmt.Sprintf("%d", followerID),
+		})
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Followed successfully"})
+	// Broadcast Flash Event (Global Ticker)
+	services.Hub.Broadcast(services.ChattrEvent{
+		Type:      "follow",
+		Title:     "New Growth!",
+		Body:      sender.Username + " started following " + following.Username,
+		Username:  sender.Username,
+		Avatar:    sender.Avatar,
+		CreatedAt: time.Now().Format(time.RFC3339),
+	})
+
+	c.JSON(http.StatusOK, gin.H{"message": "Followed successfully", "status": "following"})
 }
 
 func UnfollowUser(c *gin.Context) {

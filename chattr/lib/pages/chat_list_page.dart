@@ -23,8 +23,12 @@ class _ChatListPageState extends State<ChatListPage> {
     final currentUserId = context.read<AuthProvider>().user?.id;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Messages', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: const BackButton(color: Colors.black),
+        title: const Text('Messages', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
       ),
       body: Consumer<ChatProvider>(
         builder: (context, chatProvider, _) {
@@ -32,7 +36,7 @@ class _ChatListPageState extends State<ChatListPage> {
             return const Center(child: CircularProgressIndicator());
           }
           if (chatProvider.chats.isEmpty) {
-            return const Center(child: Text("No chats yet."));
+            return const Center(child: Text("No messages yet.", style: TextStyle(color: Colors.grey)));
           }
           return ListView.builder(
             itemCount: chatProvider.chats.length,
@@ -40,21 +44,58 @@ class _ChatListPageState extends State<ChatListPage> {
               final chat = chatProvider.chats[index];
               final otherUser = chat.user1Id == currentUserId ? chat.user2 : chat.user1;
               
-              return ListTile(
-                leading: const CircleAvatar(radius: 25, child: Icon(Icons.person)),
-                title: Text(otherUser?.name ?? "Unknown User", style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: const Text("Tap to chat"),
-                trailing: chat.unreadCount > 0
-                    ? Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                        child: Text(
-                          '${chat.unreadCount}',
-                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
-                      )
-                    : null,
+              return InkWell(
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChatRoomPage(chat: chat))),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Colors.grey[200],
+                        backgroundImage: (otherUser?.avatar != null && otherUser!.avatar!.isNotEmpty)
+                            ? NetworkImage("${ApiService.baseUrl}${otherUser.avatar}")
+                            : null,
+                        child: (otherUser?.avatar == null || otherUser!.avatar!.isEmpty)
+                            ? Text(otherUser?.username[0].toUpperCase() ?? '?', style: const TextStyle(fontSize: 20))
+                            : null,
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              otherUser?.username ?? "Unknown",
+                              style: TextStyle(
+                                fontWeight: chat.unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              chat.lastMessage.isEmpty ? "Tap to chat" : chat.lastMessage,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: chat.unreadCount > 0 ? Colors.black : Colors.grey[600],
+                                fontWeight: chat.unreadCount > 0 ? FontWeight.w600 : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (chat.unreadCount > 0)
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(color: Colors.blue, shape: BoxShape.circle),
+                        ),
+                      const SizedBox(width: 5),
+                      const Icon(Icons.camera_alt_outlined, color: Colors.grey, size: 24),
+                    ],
+                  ),
+                ),
               );
             },
           );

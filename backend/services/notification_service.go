@@ -65,7 +65,7 @@ func init() {
 	fcmClient = client
 }
 
-func SendFCMNotification(token string, title string, body string) {
+func SendFCMNotification(token string, title string, body string, data map[string]string) {
 	if fcmClient == nil {
 		fmt.Printf("FCM Client not initialized. Stub: %s - %s\n", title, body)
 		return
@@ -77,6 +77,7 @@ func SendFCMNotification(token string, title string, body string) {
 			Title: title,
 			Body:  body,
 		},
+		Data:  data,
 		Token: token,
 	}
 
@@ -115,7 +116,9 @@ func HandleMentions(content string, senderID uint, sourceTitle string) {
 				body := sender.Username + " mentioned you in " + sourceTitle
 				CreateNotification(mentionedUser.ID, "mention", title, body)
 				if mentionedUser.FCMToken != "" {
-					SendFCMNotification(mentionedUser.FCMToken, title, body)
+					SendFCMNotification(mentionedUser.FCMToken, title, body, map[string]string{
+						"type": "mention",
+					})
 				}
 			}
 		}

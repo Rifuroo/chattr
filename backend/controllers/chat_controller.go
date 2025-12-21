@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"path/filepath"
 	"social-media-backend/config"
 	"social-media-backend/models"
 	"social-media-backend/services"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func StartChat(c *gin.Context) {
@@ -75,20 +77,79 @@ func SendMessage(c *gin.Context) {
 	chatIDStr := c.Param("id")
 	chatID, _ := strconv.Atoi(chatIDStr)
 
-	var input struct {
-		Message string `json:"message" binding:"required"`
+	var msg models.Message
+	msg.ChatID = uint(chatID)
+	msg.SenderID = userID
+	msg.CreatedAt = time.Now()
+	msg.Type = "text" // Default
+
+	// Check content type
+	if c.ContentType() == "application/json" {
+		var input struct {
+			Message   string `json:"message"`
+			Type      string `json:"type"`
+			GIFUrl    string `json:"gif_url"`
+			IsSecret  bool   `json:"is_secret"`
+			ExpiresIn int    `json:"expires_in"` // in minutes
+		}
+		if err := c.ShouldBindJSON(&input); err == nil {
+			msg.Message = input.Message
+			if input.Type != "" {
+				msg.Type = input.Type
+			}
+			if input.GIFUrl != "" {
+				msg.MediaPath = input.GIFUrl
+				msg.Type = "gif"
+			}
+			if input.IsSecret {
+				msg.IsSecret = true
+				if input.ExpiresIn > 0 {
+					expiration := time.Now().Add(time.Duration(input.ExpiresIn) * time.Minute)
+					msg.ExpiresAt = &expiration
+				}
+			}
+		}
+	} else {
+		// Multipart/form-data
+		msg.Message = c.PostForm("message")
+		msg.Type = c.PostForm("type")
+		if msg.Type == "" {
+			msg.Type = "text"
+		}
+
+		if c.PostForm("is_secret") == "true" {
+			msg.IsSecret = true
+			expiresIn, _ := strconv.Atoi(c.PostForm("expires_in"))
+			if expiresIn > 0 {
+				expiration := time.Now().Add(time.Duration(expiresIn) * time.Minute)
+				msg.ExpiresAt = &expiration
+			}
+		}
+
+		file, err := c.FormFile("media")
+		if err == nil {
+			filename := uuid.New().String() + filepath.Ext(file.Filename)
+			savePath := "uploads/" + filename
+			if err := c.SaveUploadedFile(file, savePath); err == nil {
+				msg.MediaPath = "/" + savePath
+				// Auto-detect type if not provided
+				if msg.Type == "text" {
+					ext := filepath.Ext(file.Filename)
+					if ext == ".mp4" || ext == ".mov" {
+						msg.Type = "video"
+					} else if ext == ".mp3" || ext == ".m4a" || ext == ".wav" {
+						msg.Type = "voice"
+					} else {
+						msg.Type = "image"
+					}
+				}
+			}
+		}
 	}
 
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if msg.Message == "" && msg.MediaPath == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Message or media is required"})
 		return
-	}
-
-	msg := models.Message{
-		ChatID:    uint(chatID),
-		SenderID:  userID,
-		Message:   input.Message,
-		CreatedAt: time.Now(),
 	}
 
 	if err := config.DB.Create(&msg).Error; err != nil {
@@ -96,27 +157,40 @@ func SendMessage(c *gin.Context) {
 		return
 	}
 
-	// Notification
+	// Notification & Chat update
 	var chat models.Chat
 	config.DB.Preload("User1").Preload("User2").First(&chat, chatID)
 
 	var sender models.User
-	var recipient models.User
 	config.DB.First(&sender, userID)
 
-	if chat.User1ID == userID {
-		recipient = chat.User2
-	} else {
-		recipient = chat.User1
+	recipientID := chat.User1ID
+	if userID == chat.User1ID {
+		recipientID = chat.User2ID
+	}
+
+	var recipient models.User
+	config.DB.First(&recipient, recipientID)
+
+	notificationBody := msg.Message
+	if msg.IsSecret {
+		notificationBody = "Sent you a secret message 🕵️"
+	} else if msg.Type != "text" {
+		notificationBody = "Sent a " + msg.Type
 	}
 
 	if recipient.FCMToken != "" {
-		services.SendFCMNotification(recipient.FCMToken, "New Message from "+sender.Username, msg.Message)
+		services.SendFCMNotification(recipient.FCMToken, "New Message from "+sender.Username, notificationBody, map[string]string{
+			"type":    "message",
+			"chat_id": strconv.Itoa(int(chat.ID)),
+		})
 	}
-	services.CreateNotification(recipient.ID, "message", "New Message from "+sender.Username, msg.Message)
+	services.CreateNotification(recipient.ID, "message", "New Message from "+sender.Username, notificationBody)
 
-	// Update chat updated_at
-	config.DB.Model(&models.Chat{}).Where("id = ?", chatID).Update("updated_at", time.Now())
+	config.DB.Model(&models.Chat{}).Where("id = ?", chatID).Updates(map[string]interface{}{
+		"updated_at":   time.Now(),
+		"last_message": notificationBody,
+	})
 
 	c.JSON(http.StatusCreated, msg)
 }
