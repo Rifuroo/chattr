@@ -8,8 +8,6 @@ import 'package:image_picker/image_picker.dart';
 class ApiService {
   static String get baseUrl {
     // Production URL (Hugging Face Spaces)
-  static String get baseUrl {
-    // Production URL (Hugging Face Spaces)
     return "https://rifuro-chattr-backend.hf.space";
   }
 
