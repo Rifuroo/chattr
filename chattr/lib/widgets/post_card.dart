@@ -12,6 +12,7 @@ import '../providers/auth_provider.dart';
 import 'package:flutter/services.dart'; // For Clipboard
 import 'package:share_plus/share_plus.dart'; // For Share
 import 'package:intl/intl.dart'; // For DateFormat
+import 'spotify_player.dart';
 
 class PostCard extends StatefulWidget {
   final Post post;
@@ -156,27 +157,7 @@ class _PostCardState extends State<PostCard> {
 
         // Spotify Track Tag
         if (widget.post.spotifyTrackID != null && widget.post.spotifyTrackID!.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.music_note, size: 14, color: Colors.green),
-                  const SizedBox(width: 4),
-                  const Text(
-                    "Music Tagged", // In real app, we'd fetch track info from Spotify API
-                    style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          SpotifyPlayer(trackId: widget.post.spotifyTrackID!),
         
         // Poll
         if (widget.post.poll != null) _buildPoll(widget.post.poll!),
@@ -418,7 +399,7 @@ class _PostCardState extends State<PostCard> {
                     icon: Icons.link,
                     label: 'Copy Link',
                     onTap: () {
-                      final url = "https://chattr.app/posts/${widget.post.id}";
+                      final url = "https://c-hattr.netlify.app/posts/${widget.post.id}";
                       Clipboard.setData(ClipboardData(text: url));
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -433,7 +414,7 @@ class _PostCardState extends State<PostCard> {
                     onTap: () {
                       Navigator.pop(context);
                       Share.share(
-                        'Check out this post on Chattr: https://chattr.app/posts/${widget.post.id}',
+                        'Check out this post on Chattr: https://c-hattr.netlify.app/posts/${widget.post.id}',
                         subject: 'Chattr Post',
                       );
                     },

@@ -23,6 +23,7 @@ import '../providers/memory_lane_provider.dart';
 import '../providers/memory_lane_provider.dart';
 import '../models/models.dart';
 import 'package:intl/intl.dart';
+import '../widgets/spotify_player.dart';
 
 class ProfilePage extends StatefulWidget {
   final int? userId;
@@ -267,24 +268,7 @@ class _ProfilePageState extends State<ProfilePage> {
             Text(user.bio!, style: TextStyle(color: textColor.withValues(alpha: 0.8))),
           if (user.spotifyTrackID != null && user.spotifyTrackID!.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: textColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.music_note, size: 12, color: Colors.greenAccent),
-                  const SizedBox(width: 4),
-                  const Text(
-                    "Theme Song",
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.greenAccent),
-                  ),
-                ],
-              ),
-            ),
+            SpotifyPlayer(trackId: user.spotifyTrackID!, isSmall: true),
           ],
         ],
       ),

@@ -41,6 +41,7 @@ dependencies:
   intl: ^0.20.2
   cached_network_image: ^3.4.1
   another_flushbar: ^1.12.32
+  audioplayers: ^6.1.0
   firebase_core: ^4.3.0
   firebase_messaging: ^16.1.0
   video_player: ^2.10.1

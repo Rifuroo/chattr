@@ -12,13 +12,15 @@ class ApiService {
   }
 
   static String get wsUrl {
-    // Ensure wss:// is used for production and handle port 0 issues
-    String url = baseUrl.replaceFirst('https://', 'wss://').replaceFirst('http://', 'ws://');
-    // If the URL ends with a colon (e.g. from some misconfiguration), remove it or ensure it's not :0
-    if (url.endsWith(':0')) {
-      url = url.substring(0, url.length - 2);
+    // Extract host and ensure wss:// is used, stripping any accidental port :0
+    String host = baseUrl.replaceFirst('https://', '').replaceFirst('http://', '');
+    if (host.contains(':')) {
+      host = host.split(':')[0];
     }
-    return url;
+    if (host.contains('/')) {
+      host = host.split('/')[0];
+    }
+    return "wss://$host";
   }
 
   static String get giphyApiKey {

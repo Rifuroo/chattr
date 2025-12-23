@@ -11,7 +11,7 @@ class ProfileQrPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final profileUrl = "https://chattr.app/users/${user.id}";
+    final profileUrl = "https://c-hattr.netlify.app/users/${user.id}";
 
     return Scaffold(
       appBar: AppBar(
