@@ -3,13 +3,17 @@ backend/main
 backend/main.exe
 
 # Secret files
-**/*.json
-**/*.pem
-**/*.zip
+**/*adminsdk*.json
+**/firebase-auth.json
 **/google-services.json
 **/GoogleService-Info.plist
+**/*.pem
+**/*.zip
 backend*/
 hf-*/
+# Allow essential JSON
+!**/manifest.json
+!**/Contents.json
 !chattr/pubspec.json
 !chattr/web/.well-known/assetlinks.json
 # OS files
