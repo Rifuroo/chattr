@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
@@ -149,6 +150,7 @@ class ChatProvider with ChangeNotifier {
             user2: chat.user2,
             updatedAt: chat.updatedAt,
             unreadCount: 0,
+            lastMessage: chat.lastMessage,
           );
           notifyListeners();
         }

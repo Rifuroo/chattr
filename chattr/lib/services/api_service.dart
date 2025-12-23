@@ -8,7 +8,24 @@ import 'package:image_picker/image_picker.dart';
 class ApiService {
   static String get baseUrl {
     // Production URL (Hugging Face Spaces)
+  static String get baseUrl {
+    // Production URL (Hugging Face Spaces)
     return "https://rifuro-chattr-backend.hf.space";
+  }
+
+  static String get wsUrl {
+    // Ensure wss:// is used for production and handle port 0 issues
+    String url = baseUrl.replaceFirst('https://', 'wss://').replaceFirst('http://', 'ws://');
+    // If the URL ends with a colon (e.g. from some misconfiguration), remove it or ensure it's not :0
+    if (url.endsWith(':0')) {
+      url = url.substring(0, url.length - 2);
+    }
+    return url;
+  }
+
+  static String get giphyApiKey {
+    // Current key causing 401. User should replace this with a valid Giphy SDK key.
+    return "7R0B1n8lqGvVIBwA6jO6pG7S4oGvQk0e";
   }
   
   static Future<Map<String, String>> getHeaders() async {

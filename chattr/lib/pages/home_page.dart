@@ -84,6 +84,35 @@ class _HomePageState extends State<HomePage> {
 }
 
 class HomeFeed extends StatefulWidget {
+  const HomeFeed({super.key});
+
+  @override
+  State<HomeFeed> createState() => _HomeFeedState();
+}
+
+class _HomeFeedState extends State<HomeFeed> {
+  Timer? _chatTimer;
+  Timer? _notifTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startPolling();
+  }
+
+  void _startPolling() {
+    _fetchData();
+    _chatTimer = Timer.periodic(const Duration(seconds: 5), (_) => context.read<ChatProvider>().fetchChats());
+    _notifTimer = Timer.periodic(const Duration(seconds: 10), (_) => _checkNotifications());
+  }
+
+  void _fetchData() {
+    context.read<PostProvider>().fetchPosts();
+    context.read<ChatProvider>().fetchChats();
+    context.read<NotificationProvider>().fetchNotifications();
+  }
+
+  Future<void> _checkNotifications() async {
     final notifProvider = context.read<NotificationProvider>();
     await notifProvider.fetchNotifications(silent: true);
     

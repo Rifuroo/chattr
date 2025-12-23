@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/foundation.dart';
+
 import '../providers/post_provider.dart';
 import '../providers/mention_provider.dart';
 import '../widgets/platform_utils.dart';

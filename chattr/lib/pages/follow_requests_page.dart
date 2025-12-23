@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/privacy_provider.dart';
-import '../widgets/user_avatar.dart';
+import '../services/api_service.dart';
 
 class FollowRequestsPage extends StatefulWidget {
   const FollowRequestsPage({super.key});
@@ -50,7 +50,15 @@ class _FollowRequestsPageState extends State<FollowRequestsPage> {
               final follower = request.follower!;
 
               return ListTile(
-                leading: UserAvatar(imageUrl: follower.avatar, radius: 20),
+                leading: CircleAvatar(
+                  radius: 20,
+                  backgroundImage: follower.avatar != null && follower.avatar!.isNotEmpty
+                      ? NetworkImage("${ApiService.baseUrl}${follower.avatar}")
+                      : null,
+                  child: follower.avatar == null || follower.avatar!.isEmpty
+                      ? Text(follower.username[0].toUpperCase())
+                      : null,
+                ),
                 title: Text(follower.username, style: const TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text(follower.name),
                 trailing: Row(

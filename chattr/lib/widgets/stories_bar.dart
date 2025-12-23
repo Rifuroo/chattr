@@ -75,75 +75,83 @@ class _StoriesBarState extends State<StoriesBar> {
     final currentUser = context.read<AuthProvider>().user;
     
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Column(
-        children: [
-          Stack(
-            children: [
-              GestureDetector(
-                onTap: () {
-                  if (myStory != null) {
-                    _showStoryViewer(myStory);
-                  } else {
-                    _pickAndUploadStory();
-                  }
-                },
-                child: Container(
-                  padding: myStory != null ? const EdgeInsets.all(3) : EdgeInsets.zero,
-                  decoration: myStory != null ? const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF833AB4), Color(0xFFFD1D1D), Color(0xFFFCB045)],
-                      begin: Alignment.topRight,
-                      end: Alignment.bottomLeft,
-                    ),
-                  ) : null,
+      padding: const EdgeInsets.symmetric(horizontal: 4.0), // Reduced horizontal padding
+      child: SizedBox(
+        width: 74, // Constrain width
+        child: Column(
+          mainAxisSize: MainAxisSize.min, // Use min size
+          children: [
+            Stack(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    if (myStory != null) {
+                      _showStoryViewer(myStory);
+                    } else {
+                      _pickAndUploadStory();
+                    }
+                  },
                   child: Container(
-                    padding: myStory != null ? const EdgeInsets.all(2) : EdgeInsets.zero,
+                    padding: myStory != null ? const EdgeInsets.all(3) : EdgeInsets.zero,
                     decoration: myStory != null ? const BoxDecoration(
-                      color: Colors.white,
                       shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF833AB4), Color(0xFFFD1D1D), Color(0xFFFCB045)],
+                        begin: Alignment.topRight,
+                        end: Alignment.bottomLeft,
+                      ),
                     ) : null,
-                    child: CircleAvatar(
-                      radius: 32,
-                      backgroundColor: Colors.grey[300],
-                      backgroundImage: (currentUser?.avatar != null && currentUser!.avatar!.isNotEmpty)
-                          ? NetworkImage("${ApiService.baseUrl}${currentUser.avatar}")
-                          : null,
-                      child: (currentUser?.avatar == null || currentUser!.avatar!.isEmpty)
-                          ? Text(currentUser?.username[0].toUpperCase() ?? '?', style: const TextStyle(fontSize: 24))
-                          : null,
+                    child: Container(
+                      padding: myStory != null ? const EdgeInsets.all(2) : EdgeInsets.zero,
+                      decoration: myStory != null ? const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ) : null,
+                      child: CircleAvatar(
+                        radius: 30, // Reduced from 32 to save space
+                        backgroundColor: Colors.grey[300],
+                        backgroundImage: (currentUser?.avatar != null && currentUser!.avatar!.isNotEmpty)
+                            ? NetworkImage("${ApiService.baseUrl}${currentUser.avatar}")
+                            : null,
+                        child: (currentUser?.avatar == null || currentUser!.avatar!.isEmpty)
+                            ? Text(currentUser?.username[0].toUpperCase() ?? '?', style: const TextStyle(fontSize: 20)) // Smaller font
+                            : null,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: GestureDetector(
-                  onTap: _pickAndUploadStory,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: _pickAndUploadStory,
                     child: Container(
                       padding: const EdgeInsets.all(2),
                       decoration: const BoxDecoration(
-                        color: Colors.blue,
+                        color: Colors.white,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.add, size: 14, color: Colors.white),
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Colors.blue,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.add, size: 12, color: Colors.white), // Smaller icon
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          const Text('Your Story', style: TextStyle(fontSize: 12)),
-        ],
+              ],
+            ),
+            const SizedBox(height: 2), // Reduced spacing
+            const Text(
+              'Your Story',
+              style: TextStyle(fontSize: 11), // Slightly smaller font
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }

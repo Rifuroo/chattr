@@ -36,7 +36,7 @@ class ReelProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await ApiService.postMultipart('/reels', {'caption': caption}, video);
+      final response = await ApiService.postMultipart('/reels', {'caption': caption}, [video]);
       if (response.statusCode == 201) {
         fetchReels();
         return true;

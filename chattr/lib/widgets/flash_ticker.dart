@@ -25,7 +25,7 @@ class _FlashTickerState extends State<FlashTicker> {
   }
 
   void _connect() {
-    final wsUrl = ApiService.baseUrl.replaceFirst('https', 'wss').replaceFirst('http', 'ws');
+    final wsUrl = ApiService.wsUrl;
     _channel = WebSocketChannel.connect(Uri.parse("$wsUrl/ws/flash"));
     
     _channel!.stream.listen((message) {

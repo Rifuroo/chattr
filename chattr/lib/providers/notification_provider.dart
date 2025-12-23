@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
@@ -8,6 +8,7 @@ import '../main.dart';
 import '../pages/chat_room_page.dart';
 import '../pages/profile_page.dart';
 import '../pages/activity_page.dart';
+import 'dart:convert';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("Handling a background message: ${message.messageId}");

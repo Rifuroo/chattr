@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/quest_provider.dart';
-import '../models/models.dart';
+
 
 class QuestsPage extends StatefulWidget {
   const QuestsPage({super.key});
@@ -48,7 +48,7 @@ class _QuestsPageState extends State<QuestsPage> {
               final isReadyToClaim = userQuest.progress >= quest.targetCount && !userQuest.isCompleted;
 
               return Card(
-                margin: const EdgeInsets.bottom(16),
+                margin: const EdgeInsets.only(bottom: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),

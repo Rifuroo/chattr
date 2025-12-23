@@ -1,8 +1,17 @@
+import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'package:giphy_get/giphy_get.dart';
 import '../pages/profile_page.dart';
 import '../widgets/video_player_widget.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
+import '../models/models.dart';
+import '../providers/post_provider.dart';
+import '../providers/auth_provider.dart';
+import 'package:flutter/services.dart'; // For Clipboard
+import 'package:share_plus/share_plus.dart'; // For Share
+import 'package:intl/intl.dart'; // For DateFormat
 
 class PostCard extends StatefulWidget {
   final Post post;
@@ -61,25 +70,24 @@ class _PostCardState extends State<PostCard> {
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                       Text(widget.post.user.moodEmoji!, style: const TextStyle(fontSize: 12)),
-                    ],
-                    if (widget.post.isFlash) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.amber,
-                          borderRadius: BorderRadius.circular(4),
+                      if (widget.post.isFlash) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.amber,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.bolt, size: 10, color: Colors.white),
+                              SizedBox(width: 2),
+                              Text("FLASH", style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                         ),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.bolt, size: 10, color: Colors.white),
-                            SizedBox(width: 2),
-                            Text("FLASH", style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
+                      ],
                     ],
-                  ],
                 ),
               ),
               const Spacer(),
@@ -312,8 +320,8 @@ class _PostCardState extends State<PostCard> {
   Widget _buildMedia(Post post) {
     if (post.media.isEmpty) {
       // Legacy support
-      if (post.imagePath.isEmpty) return const SizedBox.shrink();
-      return _buildSingleMedia(post.imagePath, 'image');
+      if (post.imagePath == null || post.imagePath!.isEmpty) return const SizedBox.shrink();
+      return _buildSingleMedia(post.imagePath!, 'image');
     }
 
     if (post.media.length == 1) {
@@ -513,8 +521,17 @@ class _PostCardState extends State<PostCard> {
               const Text("Comments", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const Divider(),
               Expanded(
-                    ),
-                  ),
+                child: Consumer<PostProvider>(
+                  builder: (context, provider, _) {
+                    return ListView.builder(
+                      itemCount: widget.post.comments.length,
+                      itemBuilder: (context, index) {
+                         return _buildCommentItem(widget.post.comments[index], provider, setModalState);
+                      }
+                    );
+                  }
+                ),
+              ),
                   if (_selectedCommentGif != null)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -665,7 +682,7 @@ class _PostCardState extends State<PostCard> {
                           child: CachedNetworkImage(
                             imageUrl: comment.gifUrl!,
                             height: 120,
-                            placeholder: (context, url) => const SizedBox(height: 120, child: Center(child: CircularProgressIndicator())),
+                            placeholder: (context, url) => SizedBox(height: 120, child: Center(child: CircularProgressIndicator())),
                           ),
                         ),
                       ),
@@ -706,6 +723,7 @@ class _PostCardState extends State<PostCard> {
           ...comment.replies.map((reply) => _buildCommentItem(reply, provider, setModalState, isReply: true)).toList(),
       ],
     );
+  }
   Widget _buildPoll(Poll poll) {
     final authProvider = context.read<AuthProvider>();
     final currentUserId = authProvider.user?.id;
@@ -791,7 +809,7 @@ class _PostCardState extends State<PostCard> {
                           children: [
                             Expanded(
                               child: Text(
-                                option,
+                                option.option,
                                 style: TextStyle(
                                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                   color: isSelected ? Colors.blue : Colors.black87,

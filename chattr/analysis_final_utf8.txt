@@ -1,0 +1,135 @@
+﻿Analyzing chattr...                                             
+
+   info - Don't use 'BuildContext's across async gaps - lib\pages\chat_list_page.dart:19:28 - use_build_context_synchronously
+warning - Unused import: 'package:video_player/video_player.dart' - lib\pages\chat_room_page.dart:13:8 - unused_import
+warning - Unused import: 'dart:io' - lib\pages\chat_room_page.dart:16:8 - unused_import
+   info - The private field _isSecret could be 'final' - lib\pages\chat_room_page.dart:36:8 - prefer_final_fields
+   info - The private field _expiresIn could be 'final' - lib\pages\chat_room_page.dart:37:7 - prefer_final_fields
+   info - Don't invoke 'print' in production code - lib\pages\chat_room_page.dart:61:7 - avoid_print
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\pages\chat_room_page.dart:105:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\pages\chat_room_page.dart:150:7 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\pages\chat_room_page.dart:165:7 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\pages\chat_room_page.dart:174:7 - use_build_context_synchronously
+  error - Expected an identifier - lib\pages\chat_room_page.dart:309:29 - missing_identifier
+  error - Expected to find ']' - lib\pages\chat_room_page.dart:309:29 - expected_token
+   info - The private field _mediaFiles could be 'final' - lib\pages\create_post_page.dart:26:15 - prefer_final_fields
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\pages\create_shared_story_page.dart:51:33 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\pages\edit_profile_page.dart:88:25 - use_build_context_synchronously
+   info - Don't invoke 'print' in production code - lib\pages\edit_profile_page.dart:98:7 - avoid_print
+   info - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre - lib\pages\edit_profile_page.dart:240:21 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\edit_profile_page.dart:281:91 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\pages\follow_requests_page.dart:18:38 - use_build_context_synchronously
+   info - Don't invoke 'print' in production code - lib\pages\followers_page.dart:44:7 - avoid_print
+   info - Don't use 'BuildContext's across async gaps - lib\pages\login_page.dart:23:28 - use_build_context_synchronously
+   info - Don't invoke 'print' in production code - lib\pages\music_picker_page.dart:39:7 - avoid_print
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\music_picker_page.dart:93:59 - deprecated_member_use
+warning - Unused import: 'settings_page.dart' - lib\pages\profile_page.dart:10:8 - unused_import
+warning - Unused import: 'followers_page.dart' - lib\pages\profile_page.dart:11:8 - unused_import
+warning - Duplicate import - lib\pages\profile_page.dart:23:8 - duplicate_import
+warning - Unused import: '../models/models.dart' - lib\pages\profile_page.dart:24:8 - unused_import
+warning - Unused import: 'package:intl/intl.dart' - lib\pages\profile_page.dart:25:8 - unused_import
+warning - Dead code - lib\pages\profile_page.dart:66:55 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\pages\profile_page.dart:66:58 - dead_null_aware_expression
+warning - The left operand can't be null, so the right operand is never executed - lib\pages\profile_page.dart:67:62 - dead_null_aware_expression
+  error - This expression has a type of 'void' so its value can't be used - lib\pages\profile_page.dart:562:21 - use_of_void_result
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\pages\profile_page.dart:563:33 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\pages\profile_page.dart:564:40 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\profile_qr_page.dart:39:41 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\pages\quests_page.dart:116:58 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\reels_page.dart:59:80 - deprecated_member_use
+warning - The value of the local variable 'otherUser' isn't used - lib\pages\roulette_page.dart:50:17 - unused_local_variable
+   info - Don't invoke 'print' in production code - lib\pages\roulette_page.dart:69:7 - avoid_print
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\roulette_page.dart:117:47 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\pages\shared_stories_page.dart:19:28 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\shared_stories_page.dart:87:67 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\pages\shared_story_view_page.dart:28:29 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\pages\tells_page.dart:18:38 - use_build_context_synchronously
+   info - Don't invoke 'print' in production code - lib\providers\auth_provider.dart:55:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\auth_provider.dart:81:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\auth_provider.dart:84:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\auth_provider.dart:111:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\chat_provider.dart:33:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\chat_provider.dart:52:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\chat_provider.dart:65:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\chat_provider.dart:86:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\chat_provider.dart:106:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\chat_provider.dart:119:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\chat_provider.dart:132:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\chat_provider.dart:159:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\highlight_provider.dart:24:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\highlight_provider.dart:42:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\highlight_provider.dart:54:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\highlight_provider.dart:66:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\memory_lane_provider.dart:24:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\mention_provider.dart:30:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\notification_provider.dart:14:3 - avoid_print
+   info - Don't use 'BuildContext's across async gaps - lib\providers\notification_provider.dart:56:32 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\providers\notification_provider.dart:62:34 - use_build_context_synchronously
+   info - Don't invoke 'print' in production code - lib\providers\notification_provider.dart:108:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\notification_provider.dart:110:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\notification_provider.dart:130:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\notification_provider.dart:157:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\post_provider.dart:33:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\post_provider.dart:70:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\post_provider.dart:83:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\post_provider.dart:96:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\post_provider.dart:112:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\post_provider.dart:124:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\post_provider.dart:137:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\post_provider.dart:149:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\post_provider.dart:166:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\post_provider.dart:180:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\post_provider.dart:192:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\post_provider.dart:206:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\post_provider.dart:218:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\post_provider.dart:231:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\privacy_provider.dart:22:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\privacy_provider.dart:38:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\privacy_provider.dart:48:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\privacy_provider.dart:60:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\privacy_provider.dart:71:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\privacy_provider.dart:85:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\quest_provider.dart:24:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\quest_provider.dart:39:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\reel_provider.dart:25:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\reel_provider.dart:45:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\story_provider.dart:28:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\story_provider.dart:46:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\story_provider.dart:66:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\story_provider.dart:90:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\story_provider.dart:111:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\story_provider.dart:120:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\user_provider.dart:36:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\user_provider.dart:57:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\user_provider.dart:73:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\user_provider.dart:87:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\user_provider.dart:99:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\user_provider.dart:129:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\user_provider.dart:132:7 - avoid_print
+warning - Unused import: 'dart:io' - lib\services\api_service.dart:2:8 - unused_import
+   info - Don't invoke 'print' in production code - lib\services\api_service.dart:39:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\api_service.dart:53:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\api_service.dart:66:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\api_service.dart:79:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\api_service.dart:123:7 - avoid_print
+  error - Undefined name '_startTime' - lib\widgets\audio_story_recorder.dart:44:11 - undefined_identifier
+   info - Don't invoke 'print' in production code - lib\widgets\audio_story_recorder.dart:48:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\widgets\audio_story_recorder.dart:63:7 - avoid_print
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\audio_story_recorder.dart:122:70 - deprecated_member_use
+warning - Unused import: 'package:cached_network_image/cached_network_image.dart' - lib\widgets\flash_ticker.dart:5:8 - unused_import
+   info - Don't invoke 'print' in production code - lib\widgets\flash_ticker.dart:39:7 - avoid_print
+   info - Don't use 'BuildContext's across async gaps - lib\widgets\post_card.dart:40:28 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\widgets\post_card.dart:122:33 - use_build_context_synchronously
+  error - The property 'isEmpty' can't be unconditionally accessed because the receiver can be 'null' - lib\widgets\post_card.dart:323:26 - unchecked_use_of_nullable_value
+  error - The argument type 'String?' can't be assigned to the parameter type 'String'.  - lib\widgets\post_card.dart:324:32 - argument_type_not_assignable
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\widgets\post_card.dart:488:31 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\widgets\post_card.dart:489:38 - use_build_context_synchronously
+   info - Unnecessary use of 'toList' in a spread - lib\widgets\post_card.dart:723:111 - unnecessary_to_list_in_spreads
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\post_card.dart:743:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\post_card.dart:799:61 - deprecated_member_use
+  error - The argument type 'PollOption' can't be assigned to the parameter type 'String'.  - lib\widgets\post_card.dart:812:33 - argument_type_not_assignable
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\widgets\post_card.dart:878:33 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\widgets\post_card.dart:879:40 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\stories_bar.dart:176:55 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\web_frame.dart:21:37 - deprecated_member_use
+

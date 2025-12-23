@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cross_file/cross_file.dart';
 import 'package:flutter/material.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
@@ -18,7 +19,6 @@ class _AudioStoryRecorderState extends State<AudioStoryRecorder> {
   late AudioRecorder _recorder;
   bool _isRecording = false;
   String? _path;
-  DateTime? _startTime;
 
   @override
   void initState() {
@@ -41,7 +41,6 @@ class _AudioStoryRecorderState extends State<AudioStoryRecorder> {
         await _recorder.start(const RecordConfig(), path: _path!);
         setState(() {
           _isRecording = true;
-          _startTime = DateTime.now();
         });
       }
     } catch (e) {
@@ -72,8 +71,7 @@ class _AudioStoryRecorderState extends State<AudioStoryRecorder> {
     if (stats.size == 0) return;
 
     // We can use a custom Multipart request for stories here
-    final prefs = await context.read<AuthProvider>().sharedPreferences;
-    final token = prefs?.getString('token');
+    // We can use a custom Multipart request for stories here
 
     final result = await ApiService.postMultipart(
       '/stories',

@@ -121,7 +121,7 @@ class _SearchPageState extends State<SearchPage> {
     String? thumbPath;
     if (post.media.isNotEmpty) {
       thumbPath = post.media[0].path;
-    } else if (post.imagePath.isNotEmpty) {
+    } else if (post.imagePath != null && post.imagePath!.isNotEmpty) {
       thumbPath = post.imagePath;
     }
 

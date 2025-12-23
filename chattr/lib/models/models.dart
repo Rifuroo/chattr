@@ -1,4 +1,4 @@
-import 'dart:convert';
+
 
 class User {
   final int id;
@@ -488,6 +488,7 @@ class Message {
   final DateTime createdAt;
   final String type;
   final String? mediaPath;
+  final String? gifUrl;
   final bool isSecret;
   final DateTime? expiresAt;
 
@@ -501,6 +502,7 @@ class Message {
     required this.createdAt,
     this.type = 'text',
     this.mediaPath,
+    this.gifUrl,
     this.isSecret = false,
     this.expiresAt,
   });
@@ -516,6 +518,7 @@ class Message {
       createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
       type: json['type'] ?? 'text',
       mediaPath: json['media_path'],
+      gifUrl: json['gif_url'],
       isSecret: json['is_secret'] ?? false,
       expiresAt: json['expires_at'] != null ? DateTime.tryParse(json['expires_at'].toString()) : null,
     );

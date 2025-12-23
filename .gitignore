@@ -3,10 +3,15 @@ backend/main
 backend/main.exe
 
 # Secret files
-backend/*.json
-chattr/android/app/google-services.json
-chattr/ios/Runner/GoogleService-Info.plist
-
+**/*.json
+**/*.pem
+**/*.zip
+**/google-services.json
+**/GoogleService-Info.plist
+backend*/
+hf-*/
+!chattr/pubspec.json
+!chattr/web/.well-known/assetlinks.json
 # OS files
 .DS_Store
 Thumbs.db

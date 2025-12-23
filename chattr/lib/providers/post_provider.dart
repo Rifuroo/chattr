@@ -97,7 +97,7 @@ class PostProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> commentPost(int postId, String content, {int? parentId}) async {
+  Future<bool> commentPost(int postId, String content, {int? parentId, String? gifUrl}) async {
     try {
       final response = await ApiService.post('/posts/$postId/comment', {
         'content': content,

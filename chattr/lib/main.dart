@@ -17,6 +17,7 @@ import 'providers/highlight_provider.dart';
 import 'providers/memory_lane_provider.dart';
 import 'pages/login_page.dart';
 import 'pages/home_page.dart';
+import 'widgets/web_frame.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -82,6 +83,9 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
+      builder: (context, child) {
+        return WebFrame(child: child!);
+      },
       home: Consumer<AuthProvider>(
         builder: (context, auth, _) {
           if (auth.isAuthenticated) {

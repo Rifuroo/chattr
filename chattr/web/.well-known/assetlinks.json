@@ -1,0 +1,14 @@
+[
+    {
+        "relation": [
+            "delegate_permission/common.handle_all_urls"
+        ],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "com.riflo.chattr",
+            "sha256_cert_fingerprints": [
+                "d5:1f:36:2a:08:3f:66:81:0b:f7:0e:7a:82:91:90:e9:ee:c0:bf:39:d3:6c:36:df:b0:fc:53:20:35:32:cf:53"
+            ]
+        }
+    }
+]

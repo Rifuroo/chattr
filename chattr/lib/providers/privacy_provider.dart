@@ -64,11 +64,13 @@ class PrivacyProvider with ChangeNotifier {
     }
   }
 
-  Future<void> sendTell(int userId, String content) async {
+  Future<bool> sendTell(int userId, String content) async {
     try {
       await ApiService.sendTell(userId, content);
+      return true;
     } catch (e) {
       print("Error sending tell: $e");
+      return false;
     }
   }
 

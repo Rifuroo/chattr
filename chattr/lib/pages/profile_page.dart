@@ -15,10 +15,12 @@ import 'privacy_settings_page.dart';
 import 'follow_requests_page.dart';
 import 'tells_page.dart';
 import 'shared_stories_page.dart';
+import 'quests_page.dart';
+import 'roulette_page.dart';
 import '../providers/privacy_provider.dart';
 import '../providers/highlight_provider.dart';
 import '../providers/memory_lane_provider.dart';
-import '../widgets/user_avatar.dart';
+import '../providers/memory_lane_provider.dart';
 import '../models/models.dart';
 import 'package:intl/intl.dart';
 
@@ -55,10 +57,14 @@ class _ProfilePageState extends State<ProfilePage> {
         if (userProvider.isLoading && user == null) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
+        
+        if (user == null) {
+          return const Scaffold(body: Center(child: Text("User not found")));
+        }
 
         final isOwnProfile = widget.userId == null || widget.userId == context.read<AuthProvider>().user?.id;
-        final theme = _getThemeData(user.profileTheme);
-        final textColor = _getTextColor(user.profileTheme);
+        final theme = _getThemeData(user.profileTheme ?? 'default');
+        final textColor = _getTextColor(user.profileTheme ?? 'default');
 
         return DefaultTabController(
           length: isOwnProfile ? 2 : 1,
@@ -105,8 +111,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     icon: const Icon(Icons.settings),
                     onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacySettingsPage())),
                   ),
-                ]
-                ]
+                ],
               ],
             ),
             body: Container(
@@ -137,7 +142,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => EditProfilePage(user: user))),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: textColor,
-                                  side: BorderSide(color: textColor.withOpacity(0.5)),
+                                  side: BorderSide(color: textColor.withValues(alpha: 0.5)),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 ),
                                 child: const Text('Edit Profile'),
@@ -150,8 +155,8 @@ class _ProfilePageState extends State<ProfilePage> {
                             padding: const EdgeInsets.symmetric(horizontal: 16.0),
                             child: TextButton.icon(
                               onPressed: () => _showSendTellDialog(context, user.id),
-                              icon: Icon(Icons.question_answer, size: 16, color: textColor.withOpacity(0.8)),
-                              label: Text('Send Anonymous Tell', style: TextStyle(color: textColor.withOpacity(0.8))),
+                              icon: Icon(Icons.question_answer, size: 16, color: textColor.withValues(alpha: 0.8)),
+                              label: Text('Send Anonymous Tell', style: TextStyle(color: textColor.withValues(alpha: 0.8))),
                             ),
                           ),
                         ],
@@ -165,7 +170,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       TabBar(
                         indicatorColor: textColor,
                         labelColor: textColor,
-                        unselectedLabelColor: textColor.withOpacity(0.4),
+                        unselectedLabelColor: textColor.withValues(alpha: 0.4),
                         tabs: [
                           const Tab(icon: Icon(Icons.grid_on)),
                           if (isOwnProfile) const Tab(icon: Icon(Icons.bookmark_border)),
@@ -196,7 +201,7 @@ class _ProfilePageState extends State<ProfilePage> {
         children: [
           CircleAvatar(
             radius: 40,
-            backgroundColor: textColor.withOpacity(0.1),
+            backgroundColor: textColor.withValues(alpha: 0.1),
             backgroundImage: (user.avatar != null && user.avatar!.isNotEmpty)
                 ? CachedNetworkImageProvider("${ApiService.baseUrl}${user.avatar}")
                 : null,
@@ -237,9 +242,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: textColor.withOpacity(0.1),
+                    color: textColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: textColor.withOpacity(0.2), width: 0.5),
+                    border: Border.all(color: textColor.withValues(alpha: 0.2), width: 0.5),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -259,13 +264,13 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
           ),
           if (user.bio != null && user.bio!.isNotEmpty) 
-            Text(user.bio!, style: TextStyle(color: textColor.withOpacity(0.8))),
+            Text(user.bio!, style: TextStyle(color: textColor.withValues(alpha: 0.8))),
           if (user.spotifyTrackID != null && user.spotifyTrackID!.isNotEmpty) ...[
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: textColor.withOpacity(0.1),
+                color: textColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Row(
@@ -307,14 +312,14 @@ class _ProfilePageState extends State<ProfilePage> {
           Expanded(
             child: OutlinedButton(
               onPressed: () async {
-                final chatId = await context.read<ChatProvider>().startChat(user.id);
-                if (chatId != null && mounted) {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => ChatRoomPage(chatId: chatId, otherUser: user)));
+                final chat = await context.read<ChatProvider>().startChat(user.id);
+                if (chat != null && mounted) {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => ChatRoomPage(chat: chat)));
                 }
               },
               style: OutlinedButton.styleFrom(
                 foregroundColor: _getTextColor(user.profileTheme),
-                side: BorderSide(color: _getTextColor(user.profileTheme).withOpacity(0.5)),
+                side: BorderSide(color: _getTextColor(user.profileTheme).withValues(alpha: 0.5)),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               child: const Text('Message'),
@@ -331,7 +336,7 @@ class _ProfilePageState extends State<ProfilePage> {
         final posts = isSaved ? postProvider.savedPosts : postProvider.posts.where((p) => p.userId == user.id).toList();
 
         if (posts.isEmpty) {
-          return Center(child: Text(isSaved ? "No saved posts" : "No posts yet", style: TextStyle(color: textColor.withOpacity(0.5))));
+          return Center(child: Text(isSaved ? "No saved posts" : "No posts yet", style: TextStyle(color: textColor.withValues(alpha: 0.5))));
         }
 
         return GridView.builder(
@@ -351,8 +356,8 @@ class _ProfilePageState extends State<ProfilePage> {
               child: CachedNetworkImage(
                 imageUrl: "${ApiService.baseUrl}${post.imagePath}",
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Container(color: textColor.withOpacity(0.1)),
-                errorWidget: (context, url, error) => Container(color: textColor.withOpacity(0.1), child: Icon(Icons.error, color: textColor.withOpacity(0.3))),
+                placeholder: (context, url) => Container(color: textColor.withValues(alpha: 0.1)),
+                errorWidget: (context, url, error) => Container(color: textColor.withValues(alpha: 0.1), child: Icon(Icons.error, color: textColor.withValues(alpha: 0.3))),
               ),
             );
           },
@@ -404,7 +409,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               fit: BoxFit.cover,
                             ),
                             boxShadow: [
-                              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2)),
+                              BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 2)),
                             ],
                           ),
                         ),
@@ -449,7 +454,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildHighlightsBar(bool isOwnProfile) {
     return Consumer<HighlightProvider>(
       builder: (context, highlightProvider, _) {
-        if (highlightProvider.highlights.isEmpty && !isOwnProfile) {
+        if (highlightProvider.userHighlights.isEmpty && !isOwnProfile) {
           return const SizedBox();
         }
 
@@ -460,7 +465,7 @@ class _ProfilePageState extends State<ProfilePage> {
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: highlightProvider.highlights.length + (isOwnProfile ? 1 : 0),
+              itemCount: highlightProvider.userHighlights.length + (isOwnProfile ? 1 : 0),
               itemBuilder: (context, index) {
                 if (isOwnProfile && index == 0) {
                   return Padding(
@@ -488,7 +493,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   );
                 }
 
-                final highlight = highlightProvider.highlights[isOwnProfile ? index - 1 : index];
+                final highlight = highlightProvider.userHighlights[isOwnProfile ? index - 1 : index];
                 return Padding(
                   padding: const EdgeInsets.only(right: 16),
                   child: GestureDetector(
@@ -580,7 +585,7 @@ class _StatItem extends StatelessWidget {
     return Column(
       children: [
         Text(count, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
-        Text(label, style: TextStyle(fontSize: 12, color: textColor.withOpacity(0.6))),
+        Text(label, style: TextStyle(fontSize: 12, color: textColor.withValues(alpha: 0.6))),
       ],
     );
   }

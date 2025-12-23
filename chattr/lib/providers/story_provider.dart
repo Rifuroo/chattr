@@ -57,7 +57,7 @@ class StoryProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await ApiService.postMultipart('/stories', {}, media, fieldName: 'media');
+      final response = await ApiService.postMultipart('/stories', {}, [media], fieldName: 'media');
       if (response.statusCode == 201) {
         fetchStories();
         return true;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/user_provider.dart';
 import '../providers/theme_provider.dart';
 
@@ -10,7 +11,8 @@ class PrivacySettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
-    final user = userProvider.currentUser;
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
 
     if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
@@ -32,7 +34,9 @@ class PrivacySettingsPage extends StatelessWidget {
             subtitle: const Text('When your account is private, only people you approve can see your posts.'),
             value: user.isPrivate,
             onChanged: (val) {
-              userProvider.updateProfile(isPrivate: val);
+              userProvider.updatePrivacySettings(val).then((success) {
+                if (success) authProvider.refreshUser();
+              });
             },
           ),
           const Divider(),

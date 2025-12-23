@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -141,7 +142,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   void _pickGif() async {
     GiphyGif? gif = await GiphyGet.getGif(
       context: context,
-      apiKey: "7R0B1n8lqGvVIBwA6jO6pG7S4oGvQk0e", // Example key, should be in config
+      apiKey: ApiService.giphyApiKey,
       lang: GiphyLanguage.english,
     );
 
@@ -305,7 +306,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                                   ],
                                 ),
                               ),
-                            ),
                             if (message.isEdited)
                               Padding(
                                 padding: const EdgeInsets.only(top: 2),

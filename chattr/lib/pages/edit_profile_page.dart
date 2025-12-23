@@ -1,4 +1,4 @@
-import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -222,6 +222,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     trailing: _selectedTrackID != null 
                         ? IconButton(icon: const Icon(Icons.close), onPressed: () => setState(() => _selectedTrackID = null)) 
                         : const Icon(Icons.chevron_right),
+                    onTap: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const MusicPickerPage()),
+                      );
+                      if (result != null && mounted) {
+                        setState(() => _selectedTrackID = result);
                       }
                     },
                   ),
@@ -263,7 +270,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     gradient: LinearGradient(
-                                      colors: theme['colors'],
+                                      colors: theme['colors'] as List<Color>,
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),

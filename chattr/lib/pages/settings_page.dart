@@ -9,7 +9,6 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.read<AuthProvider>();
-    final userProvider = context.watch<UserProvider>();
     final user = authProvider.user;
 
     return Scaffold(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/mention_provider.dart';
 import '../models/models.dart';
+import '../services/api_service.dart';
 
 class MentionTagOverlay extends StatelessWidget {
   final Function(User) onUserSelected;
@@ -43,10 +44,10 @@ class MentionTagOverlay extends StatelessWidget {
                       return ListTile(
                         leading: CircleAvatar(
                           radius: 14,
-                          backgroundImage: user.profilePicture != null && user.profilePicture!.isNotEmpty
-                              ? NetworkImage(user.profilePicture!)
+                          backgroundImage: user.avatar != null && user.avatar!.isNotEmpty
+                              ? NetworkImage("${ApiService.baseUrl}${user.avatar}")
                               : null,
-                          child: user.profilePicture == null || user.profilePicture!.isEmpty
+                          child: user.avatar == null || user.avatar!.isEmpty
                               ? const Icon(Icons.person, size: 16)
                               : null,
                         ),

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+
 import '../services/api_service.dart';
 import '../models/models.dart';
-import '../providers/chat_provider.dart';
 import 'chat_room_page.dart';
 import 'dart:convert';
 
@@ -54,8 +53,7 @@ class _RoulettePageState extends State<RoulettePage> with SingleTickerProviderSt
             context,
             MaterialPageRoute(
               builder: (_) => ChatRoomPage(
-                chatId: chat.id,
-                otherUser: chat.user1?.username != "" ? chat.user1! : chat.user2!, // Fallback logic
+                chat: chat,
               ),
             ),
           );
